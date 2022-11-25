@@ -29,4 +29,5 @@ public class Checker {
     public Checker(Character letter) {
         this.letter = letter;
     }
+
 }

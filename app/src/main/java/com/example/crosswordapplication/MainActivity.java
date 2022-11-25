@@ -1,62 +1,115 @@
 package com.example.crosswordapplication;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
 import android.os.Bundle;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
+//import com.example.crosswordapplication.DrawingPackege.Checker;
+import com.example.crosswordapplication.DrawingPackege.Checker;
 import com.example.crosswordapplication.DrawingPackege.Orientations;
 import com.example.crosswordapplication.DrawingPackege.SingleWord;
+import com.jsibbold.zoomage.ZoomageView;
 
 public class MainActivity extends AppCompatActivity {
 
-    SurfaceView surfaceView;
-    SurfaceHolder surfaceHolder;
     int charLength;
+    ZoomageView zoomageView;
+    Bitmap picture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        surfaceView = findViewById(R.id.drawerPlace);
-        surfaceHolder = surfaceView.getHolder();
-
         Button button = findViewById(R.id.surfaceButton);
 
-        Crossword crossword = new Crossword(this,100,100, new SingleWord[]{new SingleWord("a", "a", 1, 1, Orientations.HORIZONTAL)});
+        Crossword crossword = new Crossword(this, 10, 10, new SingleWord[]{new SingleWord("aQWEDqaeswf", "aaeswf", 2, 2, Orientations.HORIZONTAL)});
 
-        button.setOnClickListener(v -> crossword.drawBackground());
+        button.setOnClickListener(view -> {
+            crossword.drawBackground();
+            crossword.drawWord(crossword.words[0]);
+        });
+        zoomageView = findViewById(R.id.myZoomageView);
+
     }
 
-    public class Crossword{
+    public class Crossword {
 
         int sizeY;
         int sizeX;
         SingleWord[] words;
-        Paint paint = new Paint();
 
 
         public void drawBackground() {
-            int y = surfaceView.getHeight();
-            int x = surfaceView.getWidth();
-            Bitmap bitmap = Bitmap.createBitmap(x ,y, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            canvas = surfaceHolder.lockCanvas();
+            Paint paint = new Paint();
+
+            int x = zoomageView.getWidth();
+            int y = zoomageView.getHeight();
+            int oneChackLength = x / sizeX;
+            picture = Bitmap.createBitmap(x, y, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas();
+            canvas.setBitmap(picture);
+            paint.setColor(Color.BLACK);
+            paint.setStyle(Paint.Style.FILL_AND_STROKE);
+
+            canvas.drawRect(0,y,x,0,paint);
+
             paint.setColor(Color.BLUE);
-            for(int i=0;i<x;i+=10){
-                canvas.drawLine((float)i,0f,(float)i,y,paint);
+            for (int i = 0; i < x; i += oneChackLength) {
+                canvas.drawRect(i, y, i + 5, 0, paint);
             }
-            surfaceHolder.unlockCanvasAndPost(canvas);
+            for (int i = 5; i < y; i += oneChackLength) {
+                canvas.drawRect(0, i, x, i - 5, paint);
+            }
+
+            zoomageView.setImageBitmap(picture);
+
+
         }
+
+
+        @SuppressLint("ResourceAsColor")
+        public void drawWord(SingleWord word) {
+            //settings canvas, bitmap, paint for text drawing
+            Paint paint = new Paint();
+
+            int x = zoomageView.getWidth();
+            int y = zoomageView.getHeight();
+            int oneChackLength = x / sizeX;
+
+            Canvas canvas = new Canvas();
+            canvas.setBitmap(picture);
+
+            //paint.setColor(R.color.task_text_1);
+            paint.setColor(Color.argb(255,255,239,102));
+            paint.setTextSize((int)(((float) oneChackLength)*0.95));
+            //paint.setStyle(Paint.Style.FILL);
+            //draw each Checker
+            for (int i=0;i<word.letters.length;i++) {
+                //draw Checker = word.letters[i]
+                canvas.drawText(word.letters[i].letter.toString(), (( float)word.startX+0.3f+i)*oneChackLength*0.985f,(( float)word.startY+0.8f)*oneChackLength,paint);
+
+            }
+            zoomageView.setImageBitmap(picture);
+
+        }
+
+//        @SuppressLint("ResourceAsColor")
+//        public void drawChecker(Checker c) {
+//
+//        }
 
         public Crossword(Context context, int sizeY, int sizeX, SingleWord[] words) {
 
@@ -87,5 +140,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    }
+}
