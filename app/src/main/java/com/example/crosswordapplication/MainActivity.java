@@ -1,7 +1,7 @@
 package com.example.crosswordapplication;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.LinearLayoutCompat;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -9,16 +9,15 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.drawable.BitmapDrawable;
-import android.os.Build;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 //import com.example.crosswordapplication.DrawingPackege.Checker;
-import com.example.crosswordapplication.DrawingPackege.Checker;
 import com.example.crosswordapplication.DrawingPackege.Orientations;
 import com.example.crosswordapplication.DrawingPackege.SingleWord;
 import com.jsibbold.zoomage.ZoomageView;
@@ -29,12 +28,16 @@ public class MainActivity extends AppCompatActivity {
     ZoomageView zoomageView;
     Bitmap picture;
 
+
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         Button button = findViewById(R.id.surfaceButton);
+        TextView textView = findViewById(R.id.textView);
 
         Crossword crossword = new Crossword(this, 10, 10, new SingleWord[]{new SingleWord("aQWEDqaeswf", "aaeswf", 2, 2, Orientations.HORIZONTAL)});
 
@@ -46,10 +49,30 @@ public class MainActivity extends AppCompatActivity {
         button2.setOnClickListener(v -> crossword.drawBackground());
         zoomageView = findViewById(R.id.myZoomageView);
 
+//        LinearLayoutCompat linearLayoutCompat = findViewById(R.id.linearLayout);
+//        linearLayoutCompat.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View view, MotionEvent event) {
+//                switch (event.getAction()){
+//                    case MotionEvent.ACTION_DOWN:
+//                        zoomageView.setScaleType(ImageView.ScaleType.MATRIX);
+//                        textView.setText(zoomageView.getScaleType().toString());
+//                        break;
+//                    case MotionEvent.ACTION_MOVE:
+//
+//                        break;
+//                    case  MotionEvent.ACTION_UP:
+//                        zoomageView.setScaleType(ImageView.ScaleType.FIT_XY);
+//                        break;
+//                }
+//
+//                return true;
+//            }
+//        });
     }
 
     public class Crossword {
-        boolean zoomFlag = true;
+
 
         int sizeY;
         int sizeX;
@@ -79,8 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
         public void drawBackground() {
             ZoomageView.ScaleType scaleType = zoomageView.getScaleType();
-            float sX = zoomageView.getScaleX();
-            float sY = zoomageView.getScaleY();
+
             Paint paint = new Paint();
             float fx =zoomageView.getScaleX();
             float fy =zoomageView.getScaleY();
@@ -106,9 +128,9 @@ public class MainActivity extends AppCompatActivity {
             }
 
             zoomageView.setImageBitmap(picture);
-            zoomageView.setScaleX(sX);
-            zoomageView.setScaleY(sY);
-            //zoomageView.setScaleType(scaleType);
+            zoomageView.setScaleX(fx);
+            zoomageView.setScaleY(fy);
+            zoomageView.setScaleType(scaleType);
 
 
         }
