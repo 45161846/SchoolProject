@@ -7,39 +7,36 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-
-
-    <com.jsibbold.zoomage.ZoomageView
-        android:id="@+id/myZoomageView"
+    <RelativeLayout
+        android:id="@+id/relative_layout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="7"
-        android:src="@drawable/ic_launcher_background"
-        android:scaleType="fitXY"
-        app:zoomage_restrictBounds="true"
-        app:zoomage_animateOnReset="true"
-        app:zoomage_autoResetMode="NEVER"
-        app:zoomage_autoCenter="true"
-        app:zoomage_zoomable="true"
-        app:zoomage_translatable="true"
-        app:zoomage_minScale="0.6"
-        app:zoomage_maxScale="8"
-        app:zoomage_doubleTapToZoom="false"
-        />
+        android:layout_weight="8">
+
+        <ImageView
+            android:id="@+id/image_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+
+
+            />
+
+    </RelativeLayout>
+
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/text_view"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_height="100dp"/>
     <Button
         android:id="@+id/button2"
+
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
     <Button
         android:id="@+id/surfaceButton"
-
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        />
 
 </androidx.appcompat.widget.LinearLayoutCompat>
