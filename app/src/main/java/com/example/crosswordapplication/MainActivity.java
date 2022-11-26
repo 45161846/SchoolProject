@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 //import com.example.crosswordapplication.DrawingPackege.Checker;
@@ -41,18 +42,20 @@ public class MainActivity extends AppCompatActivity {
             crossword.drawBackground();
             crossword.drawWord(crossword.words[0]);
         });
+        Button button2 = findViewById(R.id.button2);
+        button2.setOnClickListener(v -> crossword.drawBackground());
         zoomageView = findViewById(R.id.myZoomageView);
 
     }
 
     public class Crossword {
+        boolean zoomFlag = true;
 
         int sizeY;
         int sizeX;
         SingleWord[] words;
 
-
-        public void drawBackground() {
+        public void flashBackground() {
             Paint paint = new Paint();
 
             int x = zoomageView.getWidth();
@@ -64,7 +67,35 @@ public class MainActivity extends AppCompatActivity {
             paint.setColor(Color.BLACK);
             paint.setStyle(Paint.Style.FILL_AND_STROKE);
 
-            canvas.drawRect(0,y,x,0,paint);
+            canvas.drawRect(0, y, x, 0, paint);
+
+
+
+            zoomageView.setImageBitmap(picture);
+
+
+        }
+
+
+        public void drawBackground() {
+            ZoomageView.ScaleType scaleType = zoomageView.getScaleType();
+            float sX = zoomageView.getScaleX();
+            float sY = zoomageView.getScaleY();
+            Paint paint = new Paint();
+            float fx =zoomageView.getScaleX();
+            float fy =zoomageView.getScaleY();
+
+
+            int x = zoomageView.getWidth();
+            int y = zoomageView.getHeight();
+            int oneChackLength = x / sizeX;
+            picture = Bitmap.createBitmap(x, y, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas();
+            canvas.setBitmap(picture);
+            paint.setColor(Color.BLACK);
+            paint.setStyle(Paint.Style.FILL_AND_STROKE);
+
+            canvas.drawRect(0, y, x, 0, paint);
 
             paint.setColor(Color.BLUE);
             for (int i = 0; i < x; i += oneChackLength) {
@@ -75,6 +106,9 @@ public class MainActivity extends AppCompatActivity {
             }
 
             zoomageView.setImageBitmap(picture);
+            zoomageView.setScaleX(sX);
+            zoomageView.setScaleY(sY);
+            //zoomageView.setScaleType(scaleType);
 
 
         }
@@ -83,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
         @SuppressLint("ResourceAsColor")
         public void drawWord(SingleWord word) {
             //settings canvas, bitmap, paint for text drawing
+            //ImageView.ScaleType scaleType = zoomageView.getScaleType();
             Paint paint = new Paint();
 
             int x = zoomageView.getWidth();
@@ -93,17 +128,17 @@ public class MainActivity extends AppCompatActivity {
             canvas.setBitmap(picture);
 
             //paint.setColor(R.color.task_text_1);
-            paint.setColor(Color.argb(255,255,239,102));
-            paint.setTextSize((int)(((float) oneChackLength)*0.95));
+            paint.setColor(Color.argb(255, 255, 239, 102));
+            paint.setTextSize((int) (((float) oneChackLength) * 0.95));
             //paint.setStyle(Paint.Style.FILL);
             //draw each Checker
-            for (int i=0;i<word.letters.length;i++) {
+            for (int i = 0; i < word.letters.length; i++) {
                 //draw Checker = word.letters[i]
-                canvas.drawText(word.letters[i].letter.toString(), (( float)word.startX+0.3f+i)*oneChackLength*0.985f,(( float)word.startY+0.8f)*oneChackLength,paint);
+                canvas.drawText(word.letters[i].letter.toString(), ((float) word.startX + 0.3f + i) * oneChackLength * 0.985f, ((float) word.startY + 0.8f) * oneChackLength, paint);
 
             }
             zoomageView.setImageBitmap(picture);
-
+            //zoomageView.setScaleType(scaleType);
         }
 
 //        @SuppressLint("ResourceAsColor")

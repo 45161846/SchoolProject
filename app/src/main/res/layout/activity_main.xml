@@ -14,16 +14,21 @@
         android:layout_height="0dp"
         android:layout_weight="7"
         android:src="@drawable/ic_launcher_background"
-        app:zoomage_restrictBounds="false"
+
+        app:zoomage_restrictBounds="true"
         app:zoomage_animateOnReset="true"
-        app:zoomage_autoResetMode="UNDER"
+        app:zoomage_autoResetMode="NEVER"
         app:zoomage_autoCenter="true"
         app:zoomage_zoomable="true"
         app:zoomage_translatable="true"
         app:zoomage_minScale="0.6"
         app:zoomage_maxScale="8"
+        app:zoomage_doubleTapToZoom="false"
         />
-
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
     <Button
         android:id="@+id/surfaceButton"
 
