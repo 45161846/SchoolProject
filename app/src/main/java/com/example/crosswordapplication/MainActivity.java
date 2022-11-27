@@ -1,10 +1,8 @@
 package com.example.crosswordapplication;
 
 import static java.lang.Math.abs;
-import static java.lang.Math.sqrt;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.LinearLayoutCompat;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -16,16 +14,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-//import com.example.crosswordapplication.DrawingPackege.Checker;
 import com.example.crosswordapplication.DrawingPackege.Orientations;
 import com.example.crosswordapplication.DrawingPackege.SingleWord;
-import com.jsibbold.zoomage.ZoomageView;
 
 public class MainActivity extends AppCompatActivity {
     private static final int NONE = 0;
@@ -33,9 +28,13 @@ public class MainActivity extends AppCompatActivity {
     private static final int ZOOM = 2;
     private int mode = NONE;
     private float oldDist = 1f;
-    private float d = 0f;
-    private float newRot = 0f;
-    float scalediff;
+
+    private float x;
+    private float y;
+
+    private static final float MIN_SCALE = 1f;
+    private static final float MAX_SCALE = 4f;
+
     float startX;
     float startY;
     int startRight;
@@ -43,16 +42,14 @@ public class MainActivity extends AppCompatActivity {
     int startLeft;
     int startTop;
     float scale;
-    float allScale;
+
 
     RelativeLayout.LayoutParams parms;
     int startwidth;
     int startheight;
-    float dx = 0, dy = 0, x = 0, y = 0;
-    float angle = 0;
+
 
     RelativeLayout relativeLayout;
-    int charLength;
 
     Bitmap picture;
     ImageView imageView;
@@ -77,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         button2.setOnClickListener(v -> crossword.drawBackground());
         //zoomageView = findViewById(R.id.myZoomageView);
         relativeLayout = findViewById(R.id.relative_layout);
-        allScale = 1f;
+
         imageView = findViewById(R.id.image_view);
         imageView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -113,8 +110,6 @@ public class MainActivity extends AppCompatActivity {
                             mode = ZOOM;
                         }
 
-                        d = rotation(event);
-
                         break;
                     case MotionEvent.ACTION_UP:
 
@@ -135,33 +130,33 @@ public class MainActivity extends AppCompatActivity {
                             parms.rightMargin = startRight - (int) (x - startX);
                             parms.bottomMargin = startBottom -(int) (y - startY);
 
-                            if(abs(parms.leftMargin)>imageView.getWidth()* (imageView.getScaleX()-1)){
+                            if(abs(parms.leftMargin)>imageView.getWidth()* (imageView.getScaleX()-1)/2){
                                 if(parms.leftMargin>0){
-                                    parms.leftMargin = (int)(imageView.getWidth()* (imageView.getScaleX()-1));
+                                    parms.leftMargin = (int)(imageView.getWidth()* (imageView.getScaleX()-1)/2);
                                 }else{
-                                    parms.leftMargin = (int)((-1)*imageView.getWidth()* (imageView.getScaleX()-1));
+                                    parms.leftMargin = (int)((-1)*imageView.getWidth()* (imageView.getScaleX()-1)/2);
                                 }
                             }
-                            if(abs(parms.rightMargin)>imageView.getWidth()* (imageView.getScaleX()-1)){
+                            if(abs(parms.rightMargin)>imageView.getWidth()* (imageView.getScaleX()-1)/2){
                                 if(parms.rightMargin>0){
-                                    parms.rightMargin = (int)(imageView.getWidth()* (imageView.getScaleX()-1));
+                                    parms.rightMargin = (int)(imageView.getWidth()* (imageView.getScaleX()-1)/2);
                                 }else{
-                                    parms.rightMargin = (int)((-1)*imageView.getWidth()* (imageView.getScaleX()-1));
+                                    parms.rightMargin = (int)((-1)*imageView.getWidth()* (imageView.getScaleX()-1)/2);
                                 }
 
                             }
-                            if(abs(parms.topMargin)>imageView.getHeight()* (imageView.getScaleX()-1)){
+                            if(abs(parms.topMargin)>imageView.getHeight()* (imageView.getScaleX()-1)/2){
                                 if(parms.topMargin>0){
-                                    parms.topMargin = (int)(imageView.getHeight()* (imageView.getScaleX()-1));
+                                    parms.topMargin = (int)(imageView.getHeight()* (imageView.getScaleX()-1)/2);
                                 }else{
-                                    parms.topMargin = (int)((-1)*imageView.getHeight()* (imageView.getScaleX()-1));
+                                    parms.topMargin = (int)((-1)*imageView.getHeight()* (imageView.getScaleX()-1)/2);
                                 }
                             }
-                            if(abs(parms.bottomMargin)>imageView.getHeight()* (imageView.getScaleX()-1)){
+                            if(abs(parms.bottomMargin)>imageView.getHeight()* (imageView.getScaleX()-1)/2){
                                 if(parms.bottomMargin>0){
-                                    parms.bottomMargin = (int)(imageView.getHeight()* (imageView.getScaleX()-1));
+                                    parms.bottomMargin = (int)(imageView.getHeight()* (imageView.getScaleX()-1)/2);
                                 }else{
-                                    parms.bottomMargin = (int)((-1)*imageView.getHeight()* (imageView.getScaleX()-1));
+                                    parms.bottomMargin = (int)((-1)*imageView.getHeight()* (imageView.getScaleX()-1)/2);
                                 }
                             }
 
@@ -173,42 +168,53 @@ public class MainActivity extends AppCompatActivity {
 
                             if (event.getPointerCount() == 2) {
 
-                                newRot = rotation(event);
-                                float r = newRot - d;
-                                angle = r;
-
                                 x = event.getRawX();
                                 y = event.getRawY();
 
                                 float newDist = spacing(event);
                                 if (newDist > 10f) {
                                     scale = newDist / oldDist * view.getScaleX();
-                                    if(scale>3){
-                                        scale = 3;
+                                    if(scale>MAX_SCALE){
+                                        scale = MAX_SCALE;
                                     }
-                                    if(scale<1){
-                                        scale = 1;
+                                    if(scale<MIN_SCALE){
+                                        scale = MIN_SCALE;
                                     }
-                                    if (scale > 0.6) {
-                                        scalediff = scale;
-                                        view.setScaleX(scale);
-                                        view.setScaleY(scale);
 
-                                    }
+                                    view.setScaleX(scale);
+                                    view.setScaleY(scale);
+
                                 }
 
-                                //view.animate().rotationBy(angle).setDuration(0).setInterpolator(new LinearInterpolator()).start();
+                                if(abs(parms.leftMargin)>imageView.getWidth()* (imageView.getScaleX()-1)/2){
+                                    if(parms.leftMargin>0){
+                                        parms.leftMargin = (int)(imageView.getWidth()* (imageView.getScaleX()-1)/2);
+                                    }else{
+                                        parms.leftMargin = (int)((-1)*imageView.getWidth()* (imageView.getScaleX()-1)/2);
+                                    }
+                                }
+                                if(abs(parms.rightMargin)>imageView.getWidth()* (imageView.getScaleX()-1)/2){
+                                    if(parms.rightMargin>0){
+                                        parms.rightMargin = (int)(imageView.getWidth()* (imageView.getScaleX()-1)/2);
+                                    }else{
+                                        parms.rightMargin = (int)((-1)*imageView.getWidth()* (imageView.getScaleX()-1)/2);
+                                    }
 
-                                x = event.getRawX();
-                                y = event.getRawY();
-
-//                                parms.leftMargin = (int) ((x - dx) + scalediff);
-//                                parms.topMargin = (int) ((y - dy) + scalediff);
-//
-//                                parms.rightMargin = 0;
-//                                parms.bottomMargin = 0;
-//                                parms.rightMargin = parms.leftMargin + (5 * parms.width);
-//                                parms.bottomMargin = parms.topMargin + (10 * parms.height);
+                                }
+                                if(abs(parms.topMargin)>imageView.getHeight()* (imageView.getScaleX()-1)/2){
+                                    if(parms.topMargin>0){
+                                        parms.topMargin = (int)(imageView.getHeight()* (imageView.getScaleX()-1)/2);
+                                    }else{
+                                        parms.topMargin = (int)((-1)*imageView.getHeight()* (imageView.getScaleX()-1)/2);
+                                    }
+                                }
+                                if(abs(parms.bottomMargin)>imageView.getHeight()* (imageView.getScaleX()-1)/2){
+                                    if(parms.bottomMargin>0){
+                                        parms.bottomMargin = (int)(imageView.getHeight()* (imageView.getScaleX()-1)/2);
+                                    }else{
+                                        parms.bottomMargin = (int)((-1)*imageView.getHeight()* (imageView.getScaleX()-1)/2);
+                                    }
+                                }
 
                                 view.setLayoutParams(parms);
 
