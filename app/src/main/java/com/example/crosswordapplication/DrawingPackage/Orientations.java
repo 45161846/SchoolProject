@@ -1,4 +1,4 @@
-package com.example.crosswordapplication.DrawingPackege;
+package com.example.crosswordapplication.DrawingPackage;
 
 public enum Orientations {
     HORIZONTAL,

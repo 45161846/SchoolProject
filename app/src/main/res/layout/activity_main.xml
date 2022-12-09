@@ -20,7 +20,12 @@
             />
 
     </RelativeLayout>
-
+<Button
+    android:id="@+id/start_voice_activity"
+    android:text="start_voice_activity"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"/>
     <Button
         android:id="@+id/button2"
 

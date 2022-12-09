@@ -2,10 +2,16 @@ package com.example.crosswordapplication;
 
 import static java.lang.Math.abs;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -16,9 +22,11 @@ import android.view.MotionEvent;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
-import com.example.crosswordapplication.DrawingPackege.Orientations;
-import com.example.crosswordapplication.DrawingPackege.SingleWord;
+import com.example.crosswordapplication.DrawingPackage.Orientations;
+import com.example.crosswordapplication.DrawingPackage.SingleWord;
+import com.example.crosswordapplication.DrawingPackage.VoiceActivity;
 
 public class MainActivity extends AppCompatActivity {
     private static final int NONE = 0;
@@ -51,13 +59,33 @@ public class MainActivity extends AppCompatActivity {
     ImageView imageView;
 
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+        if(requestCode==1){
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(this, "AUDIO GRANTED", Toast.LENGTH_SHORT).show();
+            }else{
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},1);   }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
     @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},1);
+        }
 
         Button button = findViewById(R.id.surfaceButton);
+        Button startVoice = findViewById(R.id.start_voice_activity);
+        startVoice.setOnClickListener(v -> {
+            Intent myIntent = new Intent(MainActivity.this, VoiceActivity.class);
+            MainActivity.this.startActivity(myIntent);
+        });
 
         Crossword crossword = new Crossword(this, 10, 10, new SingleWord[]{new SingleWord("aQWEDqaeswf", "aaeswf", 2, 2, Orientations.HORIZONTAL)});
 
@@ -73,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         imageView.setOnTouchListener((v, event) -> {
             final ImageView view = (ImageView) v;
 
-            ((BitmapDrawable) view.getDrawable()).setAntiAlias(true);
+//            ((BitmapDrawable) view.getDrawable()).setAntiAlias(true);
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:
                     parms = (RelativeLayout.LayoutParams) view.getLayoutParams();

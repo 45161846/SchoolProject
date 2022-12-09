@@ -3,7 +3,12 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/Comp/AndroidStudioProjects/CrosswordApplication/app/src/main/res/drawable/ic_baseline_mic_24.xml" value="0.196" />
+        <entry key="..\:/Users/Comp/AndroidStudioProjects/CrosswordApplication/app/src/main/res/drawable/ic_baseline_skip_previous_24.xml" value="0.196" />
+        <entry key="..\:/Users/Comp/AndroidStudioProjects/CrosswordApplication/app/src/main/res/drawable/ic_mute_svgrepo_com.xml" value="0.196" />
+        <entry key="..\:/Users/Comp/AndroidStudioProjects/CrosswordApplication/app/src/main/res/drawable/volume_off-48px.xml" value="0.196" />
         <entry key="..\:/Users/Comp/AndroidStudioProjects/CrosswordApplication/app/src/main/res/layout/activity_main.xml" value="0.25" />
+        <entry key="..\:/Users/Comp/AndroidStudioProjects/CrosswordApplication/app/src/main/res/layout/voice_activity.xml" value="0.36666666666666664" />
       </map>
     </option>
   </component>
