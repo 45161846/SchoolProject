@@ -4,7 +4,9 @@ plugins {
 
 android {
     compileSdk 32
-
+    buildFeatures {
+        viewBinding true
+    }
     defaultConfig {
         applicationId "com.example.crosswordapplication"
         minSdk 21
