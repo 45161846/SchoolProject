@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.ImageButton;
+import android.widget.SeekBar;
 import android.widget.Toast;
 import com.example.crosswordapplication.databinding.ActivityMainBinding;
 
@@ -25,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
     private TextToSpeech mTTS;
 
     ImageButton button;
+    SeekBar speed;
+    SeekBar pitch;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -67,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         button = binding.button;
+        speed = binding.speed;
+        pitch = binding.pitch;
 
         button.setOnClickListener(v -> {
             speakSMTH("Привет Мир");
@@ -86,6 +91,12 @@ public class MainActivity extends AppCompatActivity {
         if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)<audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/2){
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/2, 0);
         }
+        float p =(float) pitch.getProgress()/50;
+        float sp = (float) speed.getProgress()/50;
+        sp = Math.max(sp,0.1f);
+        p = Math.max(p,0.1f);
+        mTTS.setPitch(p);
+        mTTS.setSpeechRate(sp);
         mTTS.speak(s, TextToSpeech.QUEUE_FLUSH,null,null);
     }
     @Override

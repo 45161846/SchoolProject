@@ -7,7 +7,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+    <androidx.appcompat.widget.AppCompatSeekBar
+        android:id="@+id/speed"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
 
+        android:layout_weight="1"/>
+    <androidx.appcompat.widget.AppCompatSeekBar
+        android:id="@+id/pitch"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
     <ImageButton
         android:id="@+id/button"
         android:layout_width="match_parent"
