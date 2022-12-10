@@ -20,14 +20,17 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.crosswordapplication.R;
+import com.example.crosswordapplication.databinding.VoiceActivityBinding;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VoiceActivity extends AppCompatActivity {
-    Button next;
-    Button previous;
-    Button stopSound;
+    private VoiceActivityBinding binding;
+
+    ImageButton next;
+    ImageButton previous;
+    ImageButton stopSound;
     TextView textRecognised;
 
     SpeechRecognizer speechRecognizer;
@@ -38,11 +41,15 @@ public class VoiceActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.voice_activity);
+        binding = VoiceActivityBinding.inflate(getLayoutInflater());
+
+        setContentView(binding.getRoot());
 
 
-
-        textRecognised = findViewById(R.id.text_recognised);
+        next = binding.nextWordBtn;
+        previous = binding.previousWordBtn;
+        stopSound = binding.stopSoundBtn;
+        textRecognised = binding.textRecognised;
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
 
@@ -107,5 +114,11 @@ public class VoiceActivity extends AppCompatActivity {
     @Override
     public View onCreateView(@Nullable View parent, @NonNull String name, @NonNull Context context, @NonNull AttributeSet attrs) {
         return super.onCreateView(parent, name, context, attrs);
+    }
+
+    @Override
+    protected void onDestroy() {
+        binding = null;
+        super.onDestroy();
     }
 }
