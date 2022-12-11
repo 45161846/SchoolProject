@@ -4,30 +4,45 @@ package com.example.crosswordapplication;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-
+import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
-import android.os.Build;
+
 import android.os.Bundle;
+import android.os.Handler;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import android.widget.ImageButton;
-import android.widget.SeekBar;
 import android.widget.Toast;
 import com.example.crosswordapplication.databinding.ActivityMainBinding;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private AudioManager audioManager;
     private ActivityMainBinding binding;
     private TextToSpeech mTTS;
+    private SpeechRecognizer speechRecognizer;
+    private Intent speechRecognizeIntent;
+
+
+    boolean firstVolumeChange = true;
+
+    private boolean speechRunning = false;
+    private boolean isCurrentMine = false;
 
     ImageButton button;
-    SeekBar speed;
-    SeekBar pitch;
+    ImageButton stopSound;
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -45,59 +60,157 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},1);
+        }
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        mTTS = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int i) {
+        mTTS = new TextToSpeech(this, i -> {
 
-                if(i == TextToSpeech.SUCCESS){
-                    Locale locale = new Locale("ru");
-
-                    int result = mTTS.setLanguage(locale);
-                    //int result = mTTS.setLanguage(Locale.getDefault());
-
-                    if (result == TextToSpeech.LANG_MISSING_DATA
-                            || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Log.e("TTS", "Извините, этот язык не поддерживается");
-                        Toast.makeText(getApplicationContext(), "Извините, этот язык не поддерживается", Toast.LENGTH_SHORT).show();
-                    } else {
-                        button.setEnabled(true);
-                    }
-                }
+            if(i == TextToSpeech.SUCCESS){
+                ttsInitialized();
             }
         });
 
         button = binding.button;
-        speed = binding.speed;
-        pitch = binding.pitch;
+
+        stopSound = binding.stopSoundBtn;
 
         button.setOnClickListener(v -> {
-            speakSMTH("Привет Мир");
+            speechRecognizer.stopListening();
+            speechRunning = true;
+            Handler handler = new Handler();
+            handler.postDelayed(() -> speakSMTH(binding.editText.getText().toString()), 50);
+
+
+        });
+
+        stopSound.setOnClickListener(v -> {
+            mTTS.stop();
+            speechRunning = false;
+
         });
 
 
-
         audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-        //int originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+
         if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)<audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/2){
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/2, 0);
         }
 
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+
+        speechRecognizeIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+
+        speechRecognizer.startListening(speechRecognizeIntent);
+
+        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override
+            public void onReadyForSpeech(Bundle bundle) {
+                audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, true);
+
+            }
+
+            @Override
+            public void onBeginningOfSpeech() {
+                if(speechRunning) {
+                    isCurrentMine = true;
+                }
+            }
+
+            @Override
+            public void onRmsChanged(float v) {
+
+            }
+
+            @Override
+            public void onBufferReceived(byte[] bytes) {
+
+            }
+
+            @Override
+            public void onEndOfSpeech() {
+            }
+
+
+            @Override
+            public void onError(int i) {
+                speechRecognizer.startListening(speechRecognizeIntent);
+                }
+
+            @Override
+            public void onResults(Bundle bundle) {
+                ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                if(!isCurrentMine) {
+                    binding.recognizedTextView.setText(data.get(0));
+                }else{
+                    isCurrentMine = false;
+                    speechRunning = false;
+                }
+                Log.d("speechRecognizer", "started");
+                speechRecognizer.startListening(speechRecognizeIntent);
+                audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, true);
+            }
+
+            @Override
+            public void onPartialResults(Bundle bundle) {
+
+            }
+
+            @Override
+            public void onEvent(int i, Bundle bundle) {
+
+            }
+        });
 
     }
-    private void speakSMTH(String s){
-        if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)<audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/2){
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/2, 0);
+
+    private void ttsInitialized() {
+        Locale locale = new Locale("ru");
+
+        int result = mTTS.setLanguage(locale);
+
+        if (result == TextToSpeech.LANG_MISSING_DATA
+                || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            Log.e("TTS", "Извините, этот язык не поддерживается");
+            Toast.makeText(getApplicationContext(), "Извините, этот язык не поддерживается", Toast.LENGTH_SHORT).show();
+        } else {
+            button.setEnabled(true);
         }
-        float p =(float) pitch.getProgress()/50;
-        float sp = (float) speed.getProgress()/50;
-        sp = Math.max(sp,0.1f);
-        p = Math.max(p,0.1f);
-        mTTS.setPitch(p);
-        mTTS.setSpeechRate(sp);
-        mTTS.speak(s, TextToSpeech.QUEUE_FLUSH,null,null);
+
+        mTTS.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override
+            public void onStart(String utteranceId) {
+
+            }
+
+            @Override
+            // this method will always called from a background thread.
+            public void onDone(String utteranceId) {
+                speechRunning = false;
+            }
+
+            @Override
+            public void onError(String utteranceId) {
+
+            }
+        });
+
+    }
+
+    private void speakSMTH(String s){
+        if(firstVolumeChange) {
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2) {
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2, 0);
+            }
+            firstVolumeChange = false;
+        }
+
+        mTTS.speak(s, TextToSpeech.QUEUE_FLUSH,null,TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID);
+
     }
     @Override
     protected void onDestroy() {

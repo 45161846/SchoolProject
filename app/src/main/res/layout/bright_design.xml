@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/text_recognised"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5"/>
+
+    <ImageButton
+        android:id="@+id/next_word_btn"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:src="@drawable/ic_baseline_skip_next_24"
+        android:background="@color/next_button"
+        android:layout_weight="3"/>
+    <ImageButton
+        android:id="@+id/previous_word_btn"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:src="@drawable/ic_baseline_skip_previous_24"
+        android:background="@color/previous_button"
+        android:layout_weight="3"/>
+    <ImageButton
+        android:id="@+id/stop_sound_btn"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="3"
+        android:background="@color/purple_500"
+        android:src="@drawable/ic_mute_svgrepo_com"/>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

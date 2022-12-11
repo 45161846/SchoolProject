@@ -33,10 +33,9 @@ public class VoiceActivity extends AppCompatActivity {
     ImageButton stopSound;
     TextView textRecognised;
 
-    SpeechRecognizer speechRecognizer;
 
-
-    Intent speechRecognizeIntent;
+    private SpeechRecognizer speechRecognizer;
+    private Intent speechRecognizeIntent;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,6 +49,7 @@ public class VoiceActivity extends AppCompatActivity {
         previous = binding.previousWordBtn;
         stopSound = binding.stopSoundBtn;
         textRecognised = binding.textRecognised;
+
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
 

@@ -7,21 +7,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-    <androidx.appcompat.widget.AppCompatSeekBar
-        android:id="@+id/speed"
+    <EditText
+        android:id="@+id/edit_text"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_weight="2"/>
 
-        android:layout_weight="1"/>
-    <androidx.appcompat.widget.AppCompatSeekBar
-        android:id="@+id/pitch"
+    <TextView
+        android:id="@+id/recognized_text_view"
+        android:textColor="@color/teal_700"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:text="SOME TEXT"
+        android:layout_weight="2"/>
+
     <ImageButton
         android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="7"/>
+        android:layout_weight="3"/>
+    <ImageButton
+        android:id="@+id/stop_sound_btn"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="3"
+        android:background="@color/purple_500"
+        android:src="@drawable/ic_mute_svgrepo_com"/>
+
 
 </androidx.appcompat.widget.LinearLayoutCompat>
