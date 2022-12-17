@@ -1,4 +1,4 @@
-package com.example.crosswordapplication.DrawingPackage;
+package com.example.crosswordapplication.CrosswordPackage;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
@@ -12,8 +12,8 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
-@Entity(tableName = "words")
-public class SingleWord implements Serializable {
+@Entity(tableName = "last")
+public class SingleWord2 implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
     private int ID;
@@ -93,7 +93,7 @@ public class SingleWord implements Serializable {
         this.task = task;
     }
 
-    public SingleWord(int parent_crossword,String task, String l, int x, int y, boolean orientation, ArrayList<int[]> crosses) {
+    public SingleWord2(int parent_crossword,String task, String l, int x, int y, boolean orientation, ArrayList<int[]> crosses) {
         this.task = task;
         this.orientation = orientation;
         startX = x;
@@ -105,7 +105,7 @@ public class SingleWord implements Serializable {
 
     }
 
-    public SingleWord(int parent_crossword, String task,String l, boolean[] opened, int x, int y, boolean orientation, ArrayList<int[]> crosses) {
+    public SingleWord2(int parent_crossword, String task,String l, boolean[] opened, int x, int y, boolean orientation, ArrayList<int[]> crosses) {
         this.task = task;
         this.orientation = orientation;
         startX = x;
