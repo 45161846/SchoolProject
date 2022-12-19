@@ -1,9 +1,10 @@
 package com.example.crosswordapplication.DrawingPackage;
 
-import android.arch.persistence.room.ColumnInfo;
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.PrimaryKey;
-import android.arch.persistence.room.TypeConverter;
+
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+import androidx.room.TypeConverter;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -11,6 +12,7 @@ import com.google.gson.reflect.TypeToken;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity(tableName = "words")
 public class SingleWord implements Serializable {
@@ -21,29 +23,92 @@ public class SingleWord implements Serializable {
     @ColumnInfo(name = "parent_crossword")
     private int parent_crossword;
 
+    @ColumnInfo(name = "numberOfWord")
+    public int numberOfWord;
 
     @ColumnInfo(name = "x")
-    private int startX;
+    public int startX;
+
     @ColumnInfo(name = "y")
-    private int startY;
+    public int startY;
+
+    @ColumnInfo(name = "crosses")
+    public ArrayList<int[]> crosses;
 
     @ColumnInfo(name = "orientation")
-    private boolean orientation;
+    public boolean orientation;
 
     @ColumnInfo(name = "isSolved")
-    private boolean isSolved;
-
-    public int wordLength;
+    public boolean isSolved;
 
     @ColumnInfo(name = "answer")
     public String answer;
+
+    public SingleWord() {
+
+    }
+
     @ColumnInfo(name = "task")
     public String task;
 
-    @ColumnInfo(name = "solved")
-    private String crossesString;
+    @ColumnInfo(name = "solvedLetters")
+    private String solvedLetters;
 
-    private ArrayList<int[]> crosses;
+
+    public int getID() {
+        return ID;
+    }
+
+    public void setID(int ID) {
+        this.ID = ID;
+    }
+
+    public int getParent_crossword() {
+        return parent_crossword;
+    }
+
+    public void setParent_crossword(int parent_crossword) {
+        this.parent_crossword = parent_crossword;
+    }
+
+    public boolean isSolved() {
+        return isSolved;
+    }
+
+    public void setSolved(boolean solved) {
+        isSolved = solved;
+    }
+
+    public String getCrossesString() {
+        return solvedLetters;
+    }
+
+    public void setCrossesString(String crossesString) {
+        this.solvedLetters = crossesString;
+    }
+
+
+    public String getSolvedLetters() {
+        return solvedLetters;
+    }
+    public int getNumberOfWord() {
+        return numberOfWord;
+    }
+
+    public void setNumberOfWord(int numberOfWord) {
+        this.numberOfWord = numberOfWord;
+    }
+    public void setSolvedLetters(String solvedLetters) {
+        this.solvedLetters = solvedLetters;
+    }
+
+    public ArrayList<int[]> getCrosses() {
+        return crosses;
+    }
+
+    public void setCrosses(ArrayList<int[]> crosses) {
+        this.crosses = crosses;
+    }
 
     public int getStartX() {
         return startX;
@@ -69,13 +134,6 @@ public class SingleWord implements Serializable {
         this.orientation = orientation;
     }
 
-    public int getWordLength() {
-        return wordLength;
-    }
-
-    public void setWordLength(int wordLength) {
-        this.wordLength = wordLength;
-    }
 
     public String getAnswer() {
         return answer;
@@ -93,32 +151,25 @@ public class SingleWord implements Serializable {
         this.task = task;
     }
 
-    public SingleWord(int parent_crossword,String task, String l, int x, int y, boolean orientation, ArrayList<int[]> crosses) {
+    public SingleWord(int parent_crossword, int numberOfWord, String task, String answer, int startX, int startY, boolean orientation, ArrayList<int[]> crosses,String solvedLetters,boolean isSolved) {
         this.task = task;
         this.orientation = orientation;
-        startX = x;
-        startY = y;
+        this.startX = startX;
+        this.startY = startY;
         this.parent_crossword = parent_crossword;
-        this.wordLength = l.length();
-        answer = l;
-        this.crosses = crosses;
 
+        this.answer = answer;
+        this.crosses = crosses;
+        this.numberOfWord = numberOfWord;
+        this.isSolved = isSolved;
+        this.solvedLetters = solvedLetters;
     }
 
-    public SingleWord(int parent_crossword, String task,String l, boolean[] opened, int x, int y, boolean orientation, ArrayList<int[]> crosses) {
-        this.task = task;
-        this.orientation = orientation;
-        startX = x;
-        startY = y;
-        this.parent_crossword = parent_crossword;
-        this.wordLength = l.length();
-        this.answer = l;
-        this.crosses = crosses;
-    }
     public static class Converters {
         @TypeConverter
-        public static ArrayList<String> fromString(String value) {
-            Type listType = new TypeToken<ArrayList<int[]>>() {}.getType();
+        public static ArrayList<int[]> fromString(String value) {
+            Type listType = new TypeToken<ArrayList<int[]>>() {
+            }.getType();
             return new Gson().fromJson(value, listType);
         }
 
@@ -127,6 +178,18 @@ public class SingleWord implements Serializable {
             Gson gson = new Gson();
             String json = gson.toJson(list);
             return json;
+        }
+        @TypeConverter
+        public static String fromArray(String list) {
+            Gson gson = new Gson();
+            String json = gson.toJson(list);
+            return json;
+        }
+        @TypeConverter
+        public static List<Boolean> arrayFromString(String value) {
+            Type listType = new TypeToken<List<Boolean>>() {
+            }.getType();
+            return new Gson().fromJson(value, listType);
         }
     }
 

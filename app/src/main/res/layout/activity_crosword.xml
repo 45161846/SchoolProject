@@ -5,25 +5,56 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageButton
-        android:id="@+id/next_word_btn"
+    <androidx.appcompat.widget.LinearLayoutCompat
+
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:src="@drawable/ic_baseline_skip_next_24"
-        android:background="@color/next_button"
-        android:layout_weight="3"/>
+        android:layout_weight="3">
+        <ImageButton
+            android:id="@+id/previous_vertical_word_btn"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_baseline_arrow_upward_24"
+            android:background="@color/next_button"
+            android:layout_weight="3"/>
+
+        <ImageButton
+            android:id="@+id/next_vertical_word_btn"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_baseline_arrow_downward_24"
+            android:background="@color/previous_button"
+            android:layout_weight="3"/>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+<androidx.appcompat.widget.LinearLayoutCompat
+
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="3">
     <ImageButton
-        android:id="@+id/previous_word_btn"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:id="@+id/previous_horizontal_word_btn"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:src="@drawable/ic_baseline_skip_previous_24"
         android:background="@color/previous_button"
         android:layout_weight="3"/>
+
+    <ImageButton
+        android:id="@+id/next_horizontal_word_btn"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_baseline_skip_next_24"
+        android:background="@color/next_button"
+        android:layout_weight="3"/>
+</androidx.appcompat.widget.LinearLayoutCompat>
+
     <ImageButton
         android:id="@+id/stop_sound_btn"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="3"
+        android:layout_weight="2.4"
         android:background="@color/purple_500"
         android:src="@drawable/ic_mute_svgrepo_com"/>
 

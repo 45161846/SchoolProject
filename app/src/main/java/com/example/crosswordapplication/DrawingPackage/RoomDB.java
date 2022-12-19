@@ -1,14 +1,14 @@
 package com.example.crosswordapplication.DrawingPackage;
 
-import android.arch.persistence.room.Database;
-import android.arch.persistence.room.Room;
-import android.arch.persistence.room.RoomDatabase;
-import android.arch.persistence.room.TypeConverters;
+
 import android.content.Context;
 
-import com.example.crosswordapplication.CrosswordPackage.SingleWord2;
+import androidx.room.Database;
+import androidx.room.Room;
+import androidx.room.RoomDatabase;
+import androidx.room.TypeConverters;
 
-@Database(entities = {SingleWord.class}, version = 1, exportSchema = false)
+@Database(entities = {SingleWord.class}, version = 2, exportSchema = false)
 @TypeConverters({SingleWord.Converters.class})
 public abstract class RoomDB extends RoomDatabase {
 
@@ -29,5 +29,4 @@ public abstract class RoomDB extends RoomDatabase {
     }
 
     public abstract MainDao mainDao();
-
 }
