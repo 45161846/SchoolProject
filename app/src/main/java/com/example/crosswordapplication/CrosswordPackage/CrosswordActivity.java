@@ -419,7 +419,7 @@ public class CrosswordActivity extends AppCompatActivity {
         currentOrientation = false;
         SingleWord s = verticalWords.get(currentV);
         boolean f1= false;
-        while(s.isSolved()){
+        if(s.isSolved()){
             s = verticalWords.get(currentV);
             currentV+=1;
             if(!otgadalPred) {
@@ -433,11 +433,11 @@ public class CrosswordActivity extends AppCompatActivity {
             if(f1){
                 if(f2){
                     speakSMTH("Вы уже отгадали все слова в кроссворде");
-                    break;
+
                 }else {
                     speakSMTH("Вы уже отгадали все слова по горизонтали");
                     readHorizontalWordPlus(true);
-                    break;
+
                 }
             }
 
@@ -461,7 +461,7 @@ public class CrosswordActivity extends AppCompatActivity {
         currentOrientation = false;
         SingleWord s = verticalWords.get(currentV);
         boolean f1 = false;
-        while(s.isSolved()){
+        if (s.isSolved()){
 
             s = verticalWords.get(currentV);
             currentV-=1;
@@ -477,11 +477,11 @@ public class CrosswordActivity extends AppCompatActivity {
             if(f1){
                 if(f2){
                     speakSMTH("Вы уже отгадали все слова в кроссворде");
-                    break;
+
                 }else {
                     speakSMTH("Вы уже отгадали все слова по вертикали");
                     readHorizontalWordMinus(true);
-                    break;
+
                 }
             }
 
@@ -508,7 +508,7 @@ public class CrosswordActivity extends AppCompatActivity {
         currentOrientation = true;
         SingleWord s = horizontalWords.get(currentH);
         boolean f1 = false;
-        while(s.isSolved()){
+        if(s.isSolved()){
 
             s = horizontalWords.get(currentH);
             currentH+=1;
@@ -523,11 +523,11 @@ public class CrosswordActivity extends AppCompatActivity {
             if(f1){
                 if(f2){
                     speakSMTH("Вы уже отгадали все слова в кроссворде");
-                    break;
+
                 }else {
                     speakSMTH("Вы уже отгадали все слова по горизонтали");
                     readVerticalWordPlus(true);
-                    break;
+
                 }
             }
         }
@@ -552,7 +552,7 @@ public class CrosswordActivity extends AppCompatActivity {
         currentOrientation = true;
         SingleWord s = horizontalWords.get(currentH);
         boolean f1 = false;
-        while(s.isSolved()){
+        if(s.isSolved()){
             s = horizontalWords.get(currentH);
             currentH-=1;
             if(!otgadalPred) {
@@ -567,11 +567,11 @@ public class CrosswordActivity extends AppCompatActivity {
             if(f1){
                 if(f2){
                     speakSMTH("Вы уже отгадали все слова в кроссворде");
-                    break;
+
                 }else {
                     speakSMTH("Вы уже отгадали все слова по горизонтали");
                     readVerticalWordMinus(true);
-                    break;
+
                 }
             }
         }
