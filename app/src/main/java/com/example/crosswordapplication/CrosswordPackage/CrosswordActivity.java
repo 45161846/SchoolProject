@@ -197,6 +197,10 @@ public class CrosswordActivity extends AppCompatActivity {
                 readHorizontalWordMinus(false);
             }
         });
+        mute.setOnClickListener(v -> {
+            mTTS.stop();
+            speechRunning = false;
+        });
         readHorizontalWordPlus(false);
     }
 
