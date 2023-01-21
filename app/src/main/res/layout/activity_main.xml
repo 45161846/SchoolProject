@@ -1,38 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/linearLayout"
+<androidx.appcompat.widget.LinearLayoutCompat
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
-    <EditText
-        android:id="@+id/edit_text"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"/>
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/recognized_text_view"
-        android:textColor="@color/teal_700"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:text="SOME TEXT"
-        android:layout_weight="2"/>
+    <androidx.appcompat.widget.LinearLayoutCompat
 
-    <ImageButton
-        android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="3"/>
+        android:layout_weight="3">
+        <ImageButton
+            android:id="@+id/previous_vertical_word_btn"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_baseline_arrow_upward_24"
+            android:background="@color/next_button"
+            android:layout_weight="3"/>
+
+        <ImageButton
+            android:id="@+id/next_vertical_word_btn"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_baseline_arrow_downward_24"
+            android:background="@color/previous_button"
+            android:layout_weight="3"/>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+
+
     <ImageButton
         android:id="@+id/stop_sound_btn"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="3"
+        android:layout_weight="2.4"
         android:background="@color/purple_500"
         android:src="@drawable/ic_mute_svgrepo_com"/>
-
 
 </androidx.appcompat.widget.LinearLayoutCompat>

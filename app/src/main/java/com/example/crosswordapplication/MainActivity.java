@@ -55,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean speechRunning = false;
     private boolean isCurrentMine = false;
 
-    ImageButton button;
     ImageButton stopSound;
 
 
@@ -72,6 +71,13 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
+
+    @Override
+    protected void onStop() {
+        speechRecognizer.destroy();
+        speechRecognizer = null;
+        super.onStop();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,17 +109,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        button = binding.button;
 
         stopSound = binding.stopSoundBtn;
-
-        button.setOnClickListener(v -> {
-            speechRecognizer.stopListening();
-            speechRunning = true;
-            Handler handler = new Handler();
-            handler.postDelayed(() -> speakSMTH(binding.editText.getText().toString()), 50);
-
-        });
 
         stopSound.setOnClickListener(v -> {
             mTTS.stop();
@@ -172,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
             public void onResults(Bundle bundle) {
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if(!isCurrentMine) {
-                    binding.recognizedTextView.setText(data.get(0));
+
                     doRecognizedCommand(data.get(0));
                 }else{
                     isCurrentMine = false;
@@ -235,8 +232,6 @@ public class MainActivity extends AppCompatActivity {
                 || result == TextToSpeech.LANG_NOT_SUPPORTED) {
             Log.e("TTS", "Извините, этот язык не поддерживается");
             Toast.makeText(getApplicationContext(), "Извините, этот язык не поддерживается", Toast.LENGTH_SHORT).show();
-        } else {
-            button.setEnabled(true);
         }
 
         mTTS.setOnUtteranceProgressListener(new UtteranceProgressListener() {

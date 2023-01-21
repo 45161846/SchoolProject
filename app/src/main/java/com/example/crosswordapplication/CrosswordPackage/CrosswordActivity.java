@@ -55,6 +55,10 @@ public class CrosswordActivity extends AppCompatActivity {
     List<SingleWord> horizontalWords = new ArrayList<>();
     List<SingleWord> verticalWords = new ArrayList<>();
     private int attempt = 0;
+    private int direction = 1; //0 - up, 1 - right, 2 - down, 3 - left
+    private int solvedHorizontalCount = 0;
+    private int solvedVerticalCount = 0;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,9 +77,16 @@ public class CrosswordActivity extends AppCompatActivity {
         for (SingleWord s : words) {
             if (s.isOrientation()) {
                 horizontalWords.add(s);
+                if(s.isSolved){
+                    solvedHorizontalCount+=1;
+                }
             } else {
                 verticalWords.add(s);
+                if(s.isSolved){
+                    solvedVerticalCount+=1;
+                }
             }
+            Log.d("myTag", s.getAnswer() + " " + s.isSolved);
         }
         currentAnswer = horizontalWords.get(0).answer;
 
@@ -103,7 +114,7 @@ public class CrosswordActivity extends AppCompatActivity {
 
             @Override
             public void onBeginningOfSpeech() {
-                if(speechRunning) {
+                if (speechRunning) {
                     isCurrentMine = true;
                 }
             }
@@ -131,9 +142,9 @@ public class CrosswordActivity extends AppCompatActivity {
             @Override
             public void onResults(Bundle bundle) {
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                if(!isCurrentMine) {
+                if (!isCurrentMine) {
                     doRecognizedCommand(data.get(0));
-                }else{
+                } else {
                     isCurrentMine = false;
                     speechRunning = false;
                 }
@@ -153,115 +164,122 @@ public class CrosswordActivity extends AppCompatActivity {
             }
         });
 //
-    mTTS = new TextToSpeech(this, i -> {
+        mTTS = new TextToSpeech(this, i -> {
 
-            if(i == TextToSpeech.SUCCESS){
+            if (i == TextToSpeech.SUCCESS) {
                 ttsInitialized();
             }
         });
 //
         nextHorizontal.setOnClickListener(v -> {
             currentH += 1;
-            if(currentH>horizontalWords.size()-1){
-                currentH-=1;
+            direction = 1;
+            if (currentH > horizontalWords.size() - 1) {
+                currentH -= 1;
                 speakSMTH("Больше нет слов по горизонтали, может попробуете предыдущие?");
-            }else {
-                readHorizontalWordPlus(false);
+            } else {
+
+                readWord();
             }
         });
         nextVertical.setOnClickListener(v -> {
             currentV += 1;
-            if(currentV>verticalWords.size()-1){
-                currentV-=1;
+            direction = 2;
+            if (currentV > verticalWords.size() - 1) {
+                currentV -= 1;
                 speakSMTH("Больше нет слов по вертикали, может попробуете предыдущие?");
-            }else {
+            } else {
 
-                readVerticalWordPlus(false);
+                readWord();
             }
         });
         previousVertical.setOnClickListener(v -> {
             currentV -= 1;
-            if(0>currentV){
-                currentV+=1;
+            direction = 0;
+            if (0 > currentV) {
+                currentV += 1;
                 speakSMTH("Больше нет слов по вертикали, может попробуете другие?");
-            }else {
-                readVerticalWordMinus(false);
+            } else {
+                readWord();
             }
         });
         previousHorizontal.setOnClickListener(v -> {
             currentH -= 1;
-            if(0>currentH){
-                currentH+=1;
+            direction = 3;
+            if (0 > currentH) {
+                currentH += 1;
                 speakSMTH("Больше нет слов по горизонтали, может попробуете другие?");
-            }else {
-                readHorizontalWordMinus(false);
+            } else {
+                readWord();
             }
         });
         mute.setOnClickListener(v -> {
             mTTS.stop();
             speechRunning = false;
         });
-        readHorizontalWordPlus(false);
+        readWord();
     }
 
     private void doRecognizedCommand(String s) {
-        s=s.toLowerCase().replaceAll(" ","");
+        s = s.toLowerCase().replaceAll(" ", "");
 
-        if(s.equals(currentAnswer)){
+        if (s.equals(currentAnswer)) {
             readCorrect();
             otgadalPred = true;
             SingleWord singleWord;
-            if(currentOrientation) {
+            if (currentOrientation) {
                 singleWord = horizontalWords.get(currentH);
-            }else{
+                solvedHorizontalCount += 1;
+            } else {
                 singleWord = verticalWords.get(currentV);
+                solvedVerticalCount += 1;
             }
             singleWord.setSolved(true);
-            Log.d("myTag",singleWord.getAnswer()+" "+singleWord.getNumberOfWord());
-            roomDB.mainDao().solved(singleWord.getID(),true);
+            Log.d("myTag", singleWord.getAnswer() + " " + singleWord.getNumberOfWord());
+            roomDB.mainDao().solved(singleWord.getID(), true);
             ArrayList<int[]> array = singleWord.getCrosses();
-            for(int[] a:array){
-                List<String> letters = roomDB.mainDao().getParticularSolvedLettersFromDB(a[0],!singleWord.isOrientation());
-                if(letters.size()>0) {
+            for (int[] a : array) {
+                List<String> letters = roomDB.mainDao().getParticularSolvedLettersFromDB(a[0], !singleWord.isOrientation());
+                if (letters.size() > 0) {
                     String letter = letters.get(0);
                     SingleWord sw = roomDB.mainDao().getByNumber(a[0], !singleWord.isOrientation());
                     letter = letter.substring(0, a[1]) + sw.answer.charAt(a[1]) + letter.substring(a[1] + 1);
                     roomDB.mainDao().updateSolvedLettersByNumber(a[0], !singleWord.isOrientation(), letter);
                     sw.setSolvedLetters(letter);
                     Log.e("myTag", letter + sw.answer);
-                }else{
-                    Log.d("myTag","smth go wrong: no such word crossed");
+                } else {
+                    Log.d("myTag", "smth go wrong: no such word crossed");
                 }
             }
 
             attempt = 0;
-            if(currentOrientation){
+            if (currentOrientation) {
                 currentH += 1;
-                if(currentH>horizontalWords.size()-1){
-                    currentH-=1;
+                if (currentH > horizontalWords.size() - 1) {
+                    currentH -= 1;
                     speakSMTH("Больше нет слов по горизонтали, может попробуете предыдущие?");
-                }else {
+                } else {
                     Handler handler = new Handler();
-                    handler.postDelayed(() -> readHorizontalWordPlus(false), 1000);
+                    handler.postDelayed(() -> readWord(), 1000);
                 }
 
 
-            }else {
+            } else {
                 currentV += 1;
-                if(currentV>verticalWords.size()-1){
-                    currentV-=1;
+                if (currentV > verticalWords.size() - 1) {
+                    currentV -= 1;
                     speakSMTH("Больше нет слов по вертикали, может попробуете следующие?");
-                }else {
+                } else {
                     Handler handler = new Handler();
-                    handler.postDelayed(() -> readVerticalWordPlus(false), 1000);
+                    handler.postDelayed(() -> readWord(), 1000);
                 }
 
             }
-        }else{
+        } else {
             readNo(s);
 
-            attempt+=1;
-            if(attempt>=3){
+            attempt += 1;
+            if (attempt >= 3) {
                 Handler handler = new Handler();
                 handler.postDelayed(() -> speakSMTH("Давайте попробуем что-то другое, а если я не понимаю ваше слово, произнесите его по буквам"), 1000);
                 attempt = 0;
@@ -271,98 +289,98 @@ public class CrosswordActivity extends AppCompatActivity {
 
     private String sayLetter(char charAt) {
 
-        switch (charAt){
+        switch (charAt) {
             case 'а':
-                return "аа";
+                return " аа ";
             case 'б':
-                return "бэ";
+                return " бэ ";
             case 'в':
-                return "вэ";
+                return " вэ ";
             case 'г':
-                return "гэ";
+                return " гэ ";
             case 'д':
-                return "дэ";
+                return " дэ ";
             case 'е':
-                return "е";
+                return " е ";
             case 'ё':
-                return "ё";
+                return " ё ";
             case 'ж':
-                return "жэ";
+                return " жэ ";
             case 'з':
-                return "зэ";
+                return " зэ ";
             case 'и':
-                return "и";
+                return " и ";
             case 'й':
-                return "и краткая";
+                return " и краткая ";
             case 'к':
-                return "ка";
+                return " ка ";
             case 'л':
-                return "эль";
+                return " эль ";
             case 'м':
-                return "эм";
+                return " эм ";
             case 'н':
-                return "эн";
+                return " эн ";
             case 'о':
-                return "о";
+                return " о ";
             case 'п':
-                return "пэ";
+                return " пэ ";
             case 'р':
-                return "эр";
+                return " эр ";
             case 'с':
-                return "эс";
+                return " эс ";
             case 'т':
-                return "тэ";
+                return " тэ ";
             case 'у':
-                return "у";
+                return " у ";
             case 'ф':
-                return "фэ";
+                return " фэ ";
             case 'х':
-                return "ха";
+                return " ха ";
             case 'ц':
-                return "цэ";
+                return " цэ ";
             case 'ч':
-                return "чэ";
+                return " чэ ";
             case 'ш':
-                return "ша";
+                return " ша ";
             case 'щ':
-                return "ща";
+                return " ща ";
             case 'ъ':
-                return "твёрдый знак";
+                return " твёрдый знак ";
             case 'ы':
-                return "ыы";
+                return " ыы ";
             case 'ь':
-                return "мягкий знак";
+                return " мягкий знак ";
             case 'э':
-                return "ээ";
+                return " ээ ";
             case 'ю':
-                return "Ю";
+                return " Ю ";
             case 'я':
-                return "Я";
+                return " Я ";
             case '1':
-                return "первая";
+                return " первая ";
             case '2':
-                return "вторая";
+                return " вторая";
             case '3':
-                return "третья";
+                return " третья ";
             case '4':
-                return "четвёртая";
+                return " четвёртая ";
             case '5':
-                return "пятая";
+                return " пятая ";
             case '6':
-                return "шестая";
+                return " шестая ";
             case '7':
-                return "седьмая";
+                return " седьмая ";
             case '8':
-                return "восьмая";
+                return " восьмая ";
             case '9':
-                return "девятая";
+                return " девятая ";
 
         }
         return String.valueOf(charAt);
     }
 
     private void readNo(String s) {
-        speakSMTH("Нет, не "+s);
+        speakSMTH("Нет, не " + s);
     }
 
     private void readCorrect() {
@@ -405,51 +423,100 @@ public class CrosswordActivity extends AppCompatActivity {
         });
 
     }
-    private void speakSMTH(String s){
+
+    private void speakSMTH(String s) {
         speechRunning = true;
-        if(firstVolumeChange) {
+        if (firstVolumeChange) {
             if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2) {
                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2, 0);
             }
             firstVolumeChange = false;
         }
         Handler handler = new Handler();
-        handler.postDelayed(() -> mTTS.speak(s, TextToSpeech.QUEUE_FLUSH,null,TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID),30);
+        handler.postDelayed(() -> mTTS.speak(s, TextToSpeech.QUEUE_FLUSH, null, TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID), 30);
 
 
     }
 
-    private void readVerticalWordPlus(boolean f2) {
-        currentOrientation = false;
-        SingleWord s = verticalWords.get(currentV);
-        boolean f1= false;
-        if(s.isSolved()){
+    private void readWord() {
+        direction%=4;
+        SingleWord s;
+        int size = 0;
+        int currentNumber = 0;
+        if (direction % 2 == 1) { // horizontal direction
+            s = horizontalWords.get(currentH);
+            currentNumber = currentH;
+            size = horizontalWords.size();
+            currentOrientation = true;
+        } else {
             s = verticalWords.get(currentV);
-            currentV+=1;
-            if(!otgadalPred) {
-                speakSMTH("Вы уже отгадали это слово");
-                otgadalPred = true;
-            }
-            if(currentV>verticalWords.size()-1){
-                currentV = 0;
-                f1=true;
-            }
-            if(f1){
-                if(f2){
-                    speakSMTH("Вы уже отгадали все слова в кроссворде");
-
-                }else {
-                    speakSMTH("Вы уже отгадали все слова по горизонтали");
-                    readHorizontalWordPlus(true);
-
-                }
-            }
-
+            currentNumber = currentV;
+            size = verticalWords.size();
+            currentOrientation = false;
         }
-        if(!f1) {
+
+        if (s.isSolved) {
+
+            if (solvedHorizontalCount == horizontalWords.size() && solvedVerticalCount == verticalWords.size()) {
+                speakSMTH("Поздравляю, вы отгадали весь кроссворд");
+                Handler handler = new Handler();
+                handler.postDelayed(this::onBackPressed, 1500);
+            } else if (direction % 2 == 1 && solvedHorizontalCount == horizontalWords.size()) { // horizontal direction
+                speakSMTH("Вы отгадали все слова по горизонтали. Давайте перейдем к вертикальным");
+                direction = 2;
+                Handler handler = new Handler();
+                handler.postDelayed(this::readWord, 1500);
+            } else if (direction % 2 == 0 && solvedVerticalCount == verticalWords.size()) {
+                speakSMTH("Вы отгадали все слова по вертикали. Давайте перейдем к горизонтальным");
+                direction = 1;
+                Handler handler = new Handler();
+                handler.postDelayed(this::readWord, 1500);
+            } else {
+                //check whether there is next word
+                if (direction == 1 || direction == 2) { //moving forward(right/down)
+                    if (currentNumber < size - 1) { //there is next
+                        if(direction == 1){
+                            currentH+=1;
+                        }else{
+                            currentV+=1;
+                        }
+                    } else {
+                        if(direction == 1){
+                            currentH-=1;
+                        }else{
+                            currentV-=1;
+                        }
+                        direction += 2; // turn
+                    }
+                    readWord();
+                } else {//moving backward(left/up)
+                    if (currentNumber > 0) { //there is next
+                        if(direction == 3){
+                            currentH-=1;
+                        }else{
+                            currentV-=1;
+                        }
+                    } else {
+                        if(direction == 3){
+                            currentH+=1;
+                        }else{
+                            currentV+=1;
+                        }
+                        direction += 2; // turn
+                    }
+                    readWord();
+                }
+
+            }
+        } else {
             currentAnswer = s.answer;
             String text = "";
-            text += s.getNumberOfWord() + "-ое по вертикали. " + s.task + " " + s.answer.length() + " буквы.";
+            if(direction%2==1){
+                text+=s.getNumberOfWord() + "-ое по горизонтали. ";
+            }else{
+                text+=s.getNumberOfWord() + "-ое по вертикали. ";
+            }
+            text +=  s.task + " " + s.answer.length() + " буквы.";
             List<String> strings = roomDB.mainDao().getParticularSolvedLettersFromDB(s.getID());
             String str = strings.get(0);
             Log.d("myTag", str);
@@ -460,143 +527,8 @@ public class CrosswordActivity extends AppCompatActivity {
             }
             speakSMTH(text);
         }
-    }
-    private void readVerticalWordMinus(boolean f2) {
-        currentOrientation = false;
-        SingleWord s = verticalWords.get(currentV);
-        boolean f1 = false;
-        if (s.isSolved()){
-
-            s = verticalWords.get(currentV);
-            currentV-=1;
-            if(!otgadalPred) {
-                speakSMTH("Вы уже отгадали это слово");
-                otgadalPred = true;
-            }
-            if(currentV<0){
-                currentV = verticalWords.size()-1;
-                f1=true;
-            }
-
-            if(f1){
-                if(f2){
-                    speakSMTH("Вы уже отгадали все слова в кроссворде");
-
-                }else {
-                    speakSMTH("Вы уже отгадали все слова по вертикали");
-                    readHorizontalWordMinus(true);
-
-                }
-            }
-
-        }
-        if(!f1) {
-            otgadalPred = false;
-            currentAnswer = s.answer;
-            String text = "";
-            text += s.getNumberOfWord() + "-ое по вертикали. " + s.task + " " + s.answer.length() + " буквы.";
-            List<String> strings = roomDB.mainDao().getParticularSolvedLettersFromDB(s.getID());
-            String str = strings.get(0);
-            Log.d("myTag", str);
-            for (int i = 0; i < str.length(); i++) {
-                if (str.charAt(i) != '*') {
-                    text += " " + (i + 1) + "-ая " + s.getAnswer().charAt(i);
-                }
-            }
-
-            speakSMTH(text);
-        }
-    }
-
-    private void readHorizontalWordPlus(boolean f2) {
-        currentOrientation = true;
-        SingleWord s = horizontalWords.get(currentH);
-        boolean f1 = false;
-        if(s.isSolved()){
-
-            s = horizontalWords.get(currentH);
-            currentH+=1;
-            if(!otgadalPred) {
-                speakSMTH("Вы уже отгадали это слово");
-                otgadalPred = true;
-            }
-            if(currentH>horizontalWords.size()-1){
-                currentH = 0;
-                f1=true;
-            }
-            if(f1){
-                if(f2){
-                    speakSMTH("Вы уже отгадали все слова в кроссворде");
-
-                }else {
-                    speakSMTH("Вы уже отгадали все слова по горизонтали");
-                    readVerticalWordPlus(true);
-
-                }
-            }
-        }
-        if(!f1) {
-            otgadalPred = false;
-            currentAnswer = s.answer;
-            String text = "";
-            text += s.getNumberOfWord() + "-ое по горизонтали. " + s.task + " " + s.answer.length() + " буквы.";
-            List<String> strings = roomDB.mainDao().getParticularSolvedLettersFromDB(s.getID());
-            String str = strings.get(0);
-            Log.d("myTag", str);
-            for (int i = 0; i < str.length(); i++) {
-                if (str.charAt(i) != '*') {
-                    text += " " + (i + 1) + "-ая " + s.getAnswer().charAt(i);
-                }
-            }
-            speakSMTH(text);
-        }
 
     }
-    private void readHorizontalWordMinus(boolean f2) {
-        currentOrientation = true;
-        SingleWord s = horizontalWords.get(currentH);
-        boolean f1 = false;
-        if(s.isSolved()){
-            s = horizontalWords.get(currentH);
-            currentH-=1;
-            if(!otgadalPred) {
-                speakSMTH("Вы уже отгадали это слово");
-                otgadalPred = true;
-            }
-            if(currentH<0){
-                currentH = horizontalWords.size()-1;
-                f1=true;
-            }
-
-            if(f1){
-                if(f2){
-                    speakSMTH("Вы уже отгадали все слова в кроссворде");
-
-                }else {
-                    speakSMTH("Вы уже отгадали все слова по горизонтали");
-                    readVerticalWordMinus(true);
-
-                }
-            }
-        }
-        if(!f1) {
-            otgadalPred = false;
-            currentAnswer = s.answer;
-            String text = "";
-            text += s.getNumberOfWord() + "-ое по горизонтали. " + s.task + " " + s.answer.length() + " буквы.";
-            List<String> strings = roomDB.mainDao().getParticularSolvedLettersFromDB(s.getID());
-            String str = strings.get(0);
-            Log.d("myTag", str);
-            for (int i = 0; i < str.length(); i++) {
-                if (str.charAt(i) != '*') {
-                    text += " " + (i + 1) + "-ая " + s.getAnswer().charAt(i);
-                }
-            }
-            speakSMTH(text);
-        }
-
-    }
-
 
 
 }
