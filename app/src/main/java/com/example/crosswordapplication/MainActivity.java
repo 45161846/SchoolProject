@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final int crosswordsNumber = 1;
     boolean firstVolumeChange = true;
+    private float speechRate = 0.7f;
 
     private boolean speechRunning = false;
     private boolean isCurrentMine = false;
@@ -63,20 +64,11 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
         if(requestCode==1){
-            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                Toast.makeText(this, "AUDIO GRANTED", Toast.LENGTH_SHORT).show();
-            }else{
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},1);   }
+            if(grantResults[0] != PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},1);
+            }
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-
-    @Override
-    protected void onStop() {
-        speechRecognizer.destroy();
-        speechRecognizer = null;
-        super.onStop();
     }
 
     @Override
@@ -88,19 +80,6 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},1);
         }
         roomDB = RoomDB.getInstance(this);
-
-        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("main",MODE_PRIVATE);
-        boolean firstStart = sharedPreferences.getBoolean("firstStart", true);
-        if(firstStart){
-            addAllCrosswords();
-            SharedPreferences.Editor prefEditor = sharedPreferences.edit();
-            prefEditor.putBoolean("firstStart",false).apply();
-            Toast.makeText(this,"first",Toast.LENGTH_SHORT).show();
-
-
-        }else{
-            Toast.makeText(this,"not first",Toast.LENGTH_SHORT).show();
-        }
 
         mTTS = new TextToSpeech(this, i -> {
 
@@ -115,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         stopSound.setOnClickListener(v -> {
             mTTS.stop();
             speechRunning = false;
-
+            isCurrentMine = false;
         });
 
 
@@ -169,10 +148,8 @@ public class MainActivity extends AppCompatActivity {
             public void onResults(Bundle bundle) {
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if(!isCurrentMine) {
-
                     doRecognizedCommand(data.get(0));
                 }else{
-                    isCurrentMine = false;
                     speechRunning = false;
                 }
                 Log.d("speechRecognizer", "started");
@@ -190,6 +167,18 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("main",MODE_PRIVATE);
+        boolean firstStart = sharedPreferences.getBoolean("firstStart", true);
+        if(firstStart){
+            addAllCrosswords();
+            SharedPreferences.Editor prefEditor = sharedPreferences.edit();
+            prefEditor.putBoolean("firstStart",false).apply();
+
+            Handler handler = new Handler();
+            handler.postDelayed(this::readWelcome, 2500);
+
+
+        }
 
     }
 
@@ -197,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
 
         s=s.toLowerCase();
         String[] parts = s.split(" ");
-        if(s.contains("открой") && s.contains("последний")){
+        if(s.contains("открой") && (s.contains("последн") || s.contains("предыдущ"))){
             openLastCrossword();
         }else if(s.contains("открой") && s.contains("кроссворд")){
             boolean flag = true;
@@ -215,8 +204,45 @@ public class MainActivity extends AppCompatActivity {
                 speakSMTH("Укажите номер кроссворда");
             }
 
-        }else if(s.contains("прочитай") && s.contains("список")){
+        }else if(s.contains("прочит") && s.contains("спис")){
             readListOfCrosswords();
+        }else if(s.contains("инструкц")){
+            readInstruction();
+        }else if(s.contains("всутлен") || s.contains("приветств")){
+            readWelcome();
+        }else if(s.contains("медлен")){
+            if(speechRate>0.5){
+                speechRate-=0.1;
+                mTTS.setSpeechRate(speechRate);
+            }else{
+                speakSMTH("Я не могу медленее");
+            }
+        }else if(s.contains("быстре")){
+            if(speechRate<1.3){
+                speechRate+=0.1;
+                mTTS.setSpeechRate(speechRate);
+            }else{
+                speakSMTH("Я не могу быстрее");
+            }
+        }else if(s.contains("громч")){
+            //todo
+            int max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            int change = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10;
+
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)<max-change){
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)+change, 0);
+            }else {
+                speakSMTH("И так уже связки болят, куда еще громче?");
+            }
+        }else if(s.contains("тише")){
+            //todo
+            int change = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10;
+
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)>change*3){
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)-change, 0);
+            }else{
+                speakSMTH("Боюсь, что тише меня не будет слышно, но если очень хотите потише, сделайте это с помощью кнопок на телефоне");
+            }
         }
 
 
@@ -241,14 +267,20 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            // this method will always called from a background thread.
             public void onDone(String utteranceId) {
-                speechRunning = false;
+                Handler handler = new Handler();
+                handler.postDelayed(() ->{
+                    speechRunning = false;
+                    isCurrentMine = false;},70);
+
             }
 
             @Override
             public void onError(String utteranceId) {
-
+                Handler handler = new Handler();
+                handler.postDelayed(() ->{
+                    isCurrentMine = false;},70);
+                isCurrentMine = false;
             }
         });
 
@@ -261,19 +293,11 @@ public class MainActivity extends AppCompatActivity {
             }
             firstVolumeChange = false;
         }
-
+        isCurrentMine = true;
         mTTS.speak(s, TextToSpeech.QUEUE_FLUSH,null,TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID);
 
     }
-    @Override
-    protected void onDestroy() {
-        if (mTTS != null) {
-            mTTS.stop();
-            mTTS.shutdown();
-        }
-        binding = null;
-        super.onDestroy();
-    }
+
     private void openLastCrossword() {
 
         SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("main",MODE_PRIVATE);
@@ -286,6 +310,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
     private void openCrossword(int parseInt) {
+        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("main",MODE_PRIVATE);
+        SharedPreferences.Editor prefEditor = sharedPreferences.edit();
+        prefEditor.putInt("last",parseInt).putFloat("speechRate", speechRate).apply();
+
         Intent myIntent = new Intent(MainActivity.this, CrosswordActivity.class);
         myIntent.putExtra("number", parseInt);
         MainActivity.this.startActivity(myIntent);
@@ -601,11 +629,47 @@ public class MainActivity extends AppCompatActivity {
         roomDB.mainDao().insert(s32);
     }
 
-    public void readInstruction(){
-        speakSMTH("я прочитала инструкцию");
-    }
-    public void readListOfCrosswords(){
-        speakSMTH("я прочитала список кроссвордов");
+    private void readWelcome(){
+        speakSMTH("         ");
+        speakSMTH(" Добро пожаловать в мир кроссвордов. Я - ваш голосовой помощник. Вы будете слышать описание слова, его длину " +
+                "и открытые буквы. Всё как в обычной игре. Задача - угадать слово. Чтобы ответить просто произнесите свою версию вслух," +
+                " а я отвечу, правильна ли она. Всё управление может быть осуществленно голосом, но для самых частых действий есть кнопки. " +
+                ". к сожалению, я иногда плохо слышу, поэтому не стесняйтесь повторять что-то, если я не отвечаю. Ещё, Я очень не люблю, " +
+                "когда меня перебивают, поэтому когда я говорю, я не замечаю, что говорят вокруг."+
+                "Если я вас услышала, то я обязательно что-нибудь скажу. Сейчас мы находимся в главном меню, где вы будете выбирать " +
+                "кроссворды. Так же, тут можно услышать полную инструкцию по управлению мной или поменять настройки. Для этого чтобы узнать все команды " +
+                " скажите (инструкция). Кстати, " +
+                " не обязательно давать мне команды в точности, как в инструкции, главное, чтобы команда содержала указанные в инструкции словаю." +
+                " Чтобы прослушать вступление еще раз, скажите (вступление) или (приветствие). Удачной игры");
+
+
+
     }
 
+    public void readInstruction(){
+        speakSMTH("Чтобы узнать все кроссворды, скажите (список кроссвордов). Чтобы прекратить мою речь, нажмите на нижнюю фиолетовую кнопку. " +
+                "Чтобы перейти к нужному кроссворду, скажите (открой кроссворд) и номер того кроссворда, который надо открыть. " +
+                "Если вы уже отгадывали что-то, можно запустить последний кросссворд, сказав (открой (последний) или (предыдущий)). " +
+                "Ещё можно менять мой голос. Скажите (быстрее) или (медленнее), чтобы изменить скорость речи. Скажите (громче) или (тише)" +
+                " чтобы поменять громкость.");
+    }
+    public void readListOfCrosswords(){
+        speakSMTH("Пока есть только один кроссворд");
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mTTS != null) {
+            mTTS.stop();
+            mTTS.shutdown();
+        }
+        binding = null;
+        super.onDestroy();
+    }
+    @Override
+    protected void onStop() {
+        speechRecognizer.destroy();
+        speechRecognizer = null;
+        super.onStop();
+    }
 }

@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.crosswordapplication.DrawingPackage.RoomDB;
 import com.example.crosswordapplication.DrawingPackage.SingleWord;
+import com.example.crosswordapplication.MainActivity;
 import com.example.crosswordapplication.databinding.ActivityCroswordBinding;
 
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class CrosswordActivity extends AppCompatActivity {
     private boolean speechRunning = false;
     private boolean isCurrentMine = false;
     private boolean currentOrientation = true;
-    private boolean otgadalPred = false;
+
     private String currentAnswer = "";
 
     ActivityCroswordBinding binding;
@@ -58,6 +59,7 @@ public class CrosswordActivity extends AppCompatActivity {
     private int direction = 1; //0 - up, 1 - right, 2 - down, 3 - left
     private int solvedHorizontalCount = 0;
     private int solvedVerticalCount = 0;
+    private float speechRate = 0.7f;
 
 
     @Override
@@ -71,19 +73,20 @@ public class CrosswordActivity extends AppCompatActivity {
         Intent intent = getIntent();
 
         int number = intent.getIntExtra("number", 0);
+        speechRate = intent.getFloatExtra("speechRate", 0.7f);
 
         List<SingleWord> words = roomDB.mainDao().getFromCrossword(number);
 
         for (SingleWord s : words) {
             if (s.isOrientation()) {
                 horizontalWords.add(s);
-                if(s.isSolved){
-                    solvedHorizontalCount+=1;
+                if (s.isSolved) {
+                    solvedHorizontalCount += 1;
                 }
             } else {
                 verticalWords.add(s);
-                if(s.isSolved){
-                    solvedVerticalCount+=1;
+                if (s.isSolved) {
+                    solvedVerticalCount += 1;
                 }
             }
             Log.d("myTag", s.getAnswer() + " " + s.isSolved);
@@ -120,18 +123,13 @@ public class CrosswordActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onRmsChanged(float v) {
-
-            }
+            public void onRmsChanged(float v) {}
 
             @Override
-            public void onBufferReceived(byte[] bytes) {
-
-            }
+            public void onBufferReceived(byte[] bytes) {}
 
             @Override
-            public void onEndOfSpeech() {
-            }
+            public void onEndOfSpeech() {}
 
 
             @Override
@@ -141,6 +139,8 @@ public class CrosswordActivity extends AppCompatActivity {
 
             @Override
             public void onResults(Bundle bundle) {
+                Log.d("commanda", "onResults(Bundle bundle)");
+
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (!isCurrentMine) {
                     doRecognizedCommand(data.get(0));
@@ -216,16 +216,18 @@ public class CrosswordActivity extends AppCompatActivity {
         mute.setOnClickListener(v -> {
             mTTS.stop();
             speechRunning = false;
+            isCurrentMine = false;
         });
         readWord();
     }
 
     private void doRecognizedCommand(String s) {
+        Log.d("commanda", "doRecognizedCommand(String s)");
         s = s.toLowerCase().replaceAll(" ", "");
 
         if (s.equals(currentAnswer)) {
             readCorrect();
-            otgadalPred = true;
+
             SingleWord singleWord;
             if (currentOrientation) {
                 singleWord = horizontalWords.get(currentH);
@@ -260,7 +262,7 @@ public class CrosswordActivity extends AppCompatActivity {
                     speakSMTH("Больше нет слов по горизонтали, может попробуете предыдущие?");
                 } else {
                     Handler handler = new Handler();
-                    handler.postDelayed(() -> readWord(), 1000);
+                    handler.postDelayed(this::readWord, 1000);
                 }
 
 
@@ -271,11 +273,149 @@ public class CrosswordActivity extends AppCompatActivity {
                     speakSMTH("Больше нет слов по вертикали, может попробуете следующие?");
                 } else {
                     Handler handler = new Handler();
-                    handler.postDelayed(() -> readWord(), 1000);
+                    handler.postDelayed(this::readWord, 1000);
                 }
 
             }
-        } else {
+        }
+        else if(s.contains("ответ")){
+            speakSMTH(currentAnswer);
+            SingleWord singleWord;
+            if (currentOrientation) {
+                singleWord = horizontalWords.get(currentH);
+                solvedHorizontalCount += 1;
+            } else {
+                singleWord = verticalWords.get(currentV);
+                solvedVerticalCount += 1;
+            }
+            singleWord.setSolved(true);
+            Log.d("myTag", singleWord.getAnswer() + " " + singleWord.getNumberOfWord());
+            roomDB.mainDao().solved(singleWord.getID(), true);
+            ArrayList<int[]> array = singleWord.getCrosses();
+            for (int[] a : array) {
+                List<String> letters = roomDB.mainDao().getParticularSolvedLettersFromDB(a[0], !singleWord.isOrientation());
+                if (letters.size() > 0) {
+                    String letter = letters.get(0);
+                    SingleWord sw = roomDB.mainDao().getByNumber(a[0], !singleWord.isOrientation());
+                    letter = letter.substring(0, a[1]) + sw.answer.charAt(a[1]) + letter.substring(a[1] + 1);
+                    roomDB.mainDao().updateSolvedLettersByNumber(a[0], !singleWord.isOrientation(), letter);
+                    sw.setSolvedLetters(letter);
+                    Log.e("myTag", letter + sw.answer);
+                } else {
+                    Log.d("myTag", "smth go wrong: no such word crossed");
+                }
+            }
+            attempt = 0;
+            if (currentOrientation) {
+                currentH += 1;
+                if (currentH > horizontalWords.size() - 1) {
+                    currentH -= 1;
+                    speakSMTH("Больше нет слов по горизонтали, может попробуете предыдущие?");
+                } else {
+                    Handler handler = new Handler();
+                    handler.postDelayed(this::readWord, 1000);
+                }
+
+
+            } else {
+                currentV += 1;
+                if (currentV > verticalWords.size() - 1) {
+                    currentV -= 1;
+                    speakSMTH("Больше нет слов по вертикали, может попробуете следующие?");
+                } else {
+                    Handler handler = new Handler();
+                    handler.postDelayed(this::readWord, 1000);
+                }
+
+            }
+        }else if(s.contains("повтор")){
+            readWord();
+        }else if(s.contains("вый") && s.contains("игр")){
+            Intent myIntent = new Intent(CrosswordActivity.this, MainActivity.class);
+            CrosswordActivity.this.startActivity(myIntent);
+        }else if(s.contains("команд")){
+            String listCommands = "Для того чтобы узнать ответ, скажите ответ. Чтобы закончить игру, " +
+                    "скажите (выйти из игры). Для того чтобы перейти к следующему или предыдущему" +
+                    " слову, " +
+                    "скажите (следующее) или (предыдущее) с указанием направления: по вертикали или горизонтали. " +
+                    "  Ещё можно менять мой голос. Скажите (быстрее) или (медленнее), чтобы изменить скорость речи. Скажите (громче) или (тише)" +
+                    " чтобы поменять громкость.";
+            speakSMTH(listCommands);
+        }else if(s.contains("горизонт") || s.contains("вертика")){
+            if(s.contains("горизонт") && s.contains("следующ")){
+                currentH += 1;
+                direction = 1;
+                if (currentH > horizontalWords.size() - 1) {
+                    currentH -= 1;
+                    speakSMTH("Больше нет слов по горизонтали, может попробуете предыдущие?");
+                } else {
+
+                    readWord();
+                }
+            }else if(s.contains("горизонт") && s.contains("предыдущ")){
+                currentH -= 1;
+                direction = 3;
+                if (0 > currentH) {
+                    currentH += 1;
+                    speakSMTH("Больше нет слов по горизонтали, может попробуете другие?");
+                } else {
+                    readWord();
+                }
+            }else if(s.contains("вертика") && s.contains("следующ")){
+                currentV += 1;
+                direction = 2;
+                if (currentV > verticalWords.size() - 1) {
+                    currentV -= 1;
+                    speakSMTH("Больше нет слов по вертикали, может попробуете предыдущие?");
+                } else {
+
+                    readWord();
+                }
+            }else if(s.contains("вертика") && s.contains("предыдущ")){
+                currentV -= 1 ;
+                direction = 0;
+                if (0 > currentV) {
+                    currentV += 1;
+                    speakSMTH("Больше нет слов по вертикали, может попробуете другие?");
+                } else {
+                    readWord();
+                }
+            }
+
+        }else if(s.contains("медлен")){
+            if(speechRate>0.5){
+                speechRate-=0.1;
+                mTTS.setSpeechRate(speechRate);
+            }else{
+                speakSMTH("Я не могу медленее");
+            }
+        }else if(s.contains("быстре")){
+            if(speechRate<1.3){
+                speechRate+=0.1;
+                mTTS.setSpeechRate(speechRate);
+            }else{
+                speakSMTH("Я не могу быстрее");
+            }
+        }else if(s.contains("громч")){
+            //todo
+            int max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            int change = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10;
+
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)<max-change){
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)+change, 0);
+            }else {
+                speakSMTH("И так уже связки болят, куда еще громче?");
+            }
+        }else if(s.contains("тише")){
+            //todo
+            int change = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10;
+
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)>change*3){
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)-change, 0);
+            }else{
+                speakSMTH("Боюсь, что тише меня не будет слышно, но если очень хотите потише, сделайте это с помощью кнопок на телефоне");
+            }
+        } else{
             readNo(s);
 
             attempt += 1;
@@ -291,89 +431,89 @@ public class CrosswordActivity extends AppCompatActivity {
 
         switch (charAt) {
             case 'а':
-                return " аа ";
+                return " (аа) ";
             case 'б':
-                return " бэ ";
+                return " (бэ) ";
             case 'в':
-                return " вэ ";
+                return " (вэ) ";
             case 'г':
-                return " гэ ";
+                return " (гэ) ";
             case 'д':
-                return " дэ ";
+                return " (дэ) ";
             case 'е':
-                return " е ";
+                return " (е) ";
             case 'ё':
-                return " ё ";
+                return " (ё) ";
             case 'ж':
-                return " жэ ";
+                return " (жэ) ";
             case 'з':
-                return " зэ ";
+                return " (зэ) ";
             case 'и':
-                return " и ";
+                return " (и) ";
             case 'й':
-                return " и краткая ";
+                return " (и краткая) ";
             case 'к':
-                return " ка ";
+                return " (ка) ";
             case 'л':
-                return " эль ";
+                return " (эль) ";
             case 'м':
-                return " эм ";
+                return " (эм) ";
             case 'н':
-                return " эн ";
+                return " (эн) ";
             case 'о':
-                return " о ";
+                return " (о) ";
             case 'п':
-                return " пэ ";
+                return " (пэ) ";
             case 'р':
-                return " эр ";
+                return " (эр) ";
             case 'с':
-                return " эс ";
+                return " (эс) ";
             case 'т':
-                return " тэ ";
+                return " (тэ) ";
             case 'у':
-                return " у ";
+                return " (у) ";
             case 'ф':
-                return " фэ ";
+                return " (фэ) ";
             case 'х':
-                return " ха ";
+                return " (ха) ";
             case 'ц':
-                return " цэ ";
+                return " (цэ) ";
             case 'ч':
-                return " чэ ";
+                return " (чэ) ";
             case 'ш':
-                return " ша ";
+                return " (ша) ";
             case 'щ':
-                return " ща ";
+                return " (ща) ";
             case 'ъ':
-                return " твёрдый знак ";
+                return " (твёрдый знак) ";
             case 'ы':
-                return " ыы ";
+                return " (ыы) ";
             case 'ь':
-                return " мягкий знак ";
+                return " (мягкий знак) ";
             case 'э':
-                return " ээ ";
+                return " (ээ) ";
             case 'ю':
-                return " Ю ";
+                return " (Ю) ";
             case 'я':
-                return " Я ";
+                return " (Я) ";
             case '1':
-                return " первая ";
+                return " (первая) ";
             case '2':
-                return " вторая";
+                return " (вторая) ";
             case '3':
-                return " третья ";
+                return " (третья) ";
             case '4':
-                return " четвёртая ";
+                return " (четвёртая) ";
             case '5':
-                return " пятая ";
+                return " (пятая) ";
             case '6':
-                return " шестая ";
+                return " (шестая) ";
             case '7':
-                return " седьмая ";
+                return " (седьмая) ";
             case '8':
-                return " восьмая ";
+                return " (восьмая) ";
             case '9':
-                return " девятая ";
+                return " (девятая) ";
 
         }
         return String.valueOf(charAt);
@@ -411,20 +551,27 @@ public class CrosswordActivity extends AppCompatActivity {
             }
 
             @Override
-            // this method will always called from a background thread.
             public void onDone(String utteranceId) {
-                speechRunning = false;
+                Handler handler = new Handler();
+                handler.postDelayed(() ->{
+                    speechRunning = false;
+                    isCurrentMine = false;},70);
+
             }
 
             @Override
             public void onError(String utteranceId) {
-
+                Handler handler = new Handler();
+                handler.postDelayed(() ->{
+                    isCurrentMine = false;},70);
+                isCurrentMine = false;
             }
         });
 
     }
 
     private void speakSMTH(String s) {
+        Log.d("commanda", "speakSMTH(String s)");
         speechRunning = true;
         if (firstVolumeChange) {
             if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2) {
@@ -439,7 +586,8 @@ public class CrosswordActivity extends AppCompatActivity {
     }
 
     private void readWord() {
-        direction%=4;
+        Log.d("commanda", "readWord()");
+        direction %= 4;
         SingleWord s;
         int size = 0;
         int currentNumber = 0;
@@ -455,7 +603,16 @@ public class CrosswordActivity extends AppCompatActivity {
             currentOrientation = false;
         }
 
-        if (s.isSolved) {
+        if (s.isSolved || s.getSolvedLetters().equals(s.answer)) {
+            if(s.getSolvedLetters().equals(s.answer)){
+                s.setSolved(true);
+                roomDB.mainDao().solved(s.getID(), true);
+                if (currentOrientation) {
+                    solvedHorizontalCount += 1;
+                } else {
+                    solvedVerticalCount += 1;
+                }
+            }
 
             if (solvedHorizontalCount == horizontalWords.size() && solvedVerticalCount == verticalWords.size()) {
                 speakSMTH("Поздравляю, вы отгадали весь кроссворд");
@@ -475,48 +632,47 @@ public class CrosswordActivity extends AppCompatActivity {
                 //check whether there is next word
                 if (direction == 1 || direction == 2) { //moving forward(right/down)
                     if (currentNumber < size - 1) { //there is next
-                        if(direction == 1){
-                            currentH+=1;
-                        }else{
-                            currentV+=1;
+                        if (direction == 1) {
+                            currentH += 1;
+                        } else {
+                            currentV += 1;
                         }
                     } else {
-                        if(direction == 1){
-                            currentH-=1;
-                        }else{
-                            currentV-=1;
+                        if (direction == 1) {
+                            currentH -= 1;
+                        } else {
+                            currentV -= 1;
                         }
                         direction += 2; // turn
                     }
-                    readWord();
                 } else {//moving backward(left/up)
                     if (currentNumber > 0) { //there is next
-                        if(direction == 3){
-                            currentH-=1;
-                        }else{
-                            currentV-=1;
+                        if (direction == 3) {
+                            currentH -= 1;
+                        } else {
+                            currentV -= 1;
                         }
                     } else {
-                        if(direction == 3){
-                            currentH+=1;
-                        }else{
-                            currentV+=1;
+                        if (direction == 3) {
+                            currentH += 1;
+                        } else {
+                            currentV += 1;
                         }
                         direction += 2; // turn
                     }
-                    readWord();
                 }
+                readWord();
 
             }
-        } else {
+        } else{
             currentAnswer = s.answer;
             String text = "";
-            if(direction%2==1){
-                text+=s.getNumberOfWord() + "-ое по горизонтали. ";
-            }else{
-                text+=s.getNumberOfWord() + "-ое по вертикали. ";
+            if (direction % 2 == 1) {
+                text += s.getNumberOfWord() + "-ое по горизонтали. ";
+            } else {
+                text += s.getNumberOfWord() + "-ое по вертикали. ";
             }
-            text +=  s.task + " " + s.answer.length() + " буквы.";
+            text += s.task + " " + s.answer.length() + " буквы.";
             List<String> strings = roomDB.mainDao().getParticularSolvedLettersFromDB(s.getID());
             String str = strings.get(0);
             Log.d("myTag", str);
@@ -530,5 +686,19 @@ public class CrosswordActivity extends AppCompatActivity {
 
     }
 
-
+    @Override
+    protected void onDestroy() {
+        if (mTTS != null) {
+            mTTS.stop();
+            mTTS.shutdown();
+        }
+        binding = null;
+        super.onDestroy();
+    }
+    @Override
+    protected void onStop() {
+        speechRecognizer.destroy();
+        speechRecognizer = null;
+        super.onStop();
+    }
 }
