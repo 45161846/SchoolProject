@@ -11,6 +11,8 @@ import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -27,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class CrosswordActivity extends AppCompatActivity {
     private AudioManager audioManager;
@@ -66,6 +69,9 @@ public class CrosswordActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityCroswordBinding.inflate(getLayoutInflater());
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(binding.getRoot());
 
 
@@ -142,12 +148,9 @@ public class CrosswordActivity extends AppCompatActivity {
                 Log.d("commanda", "onResults(Bundle bundle)");
 
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                if (!isCurrentMine) {
+
                     doRecognizedCommand(data.get(0));
-                } else {
-                    isCurrentMine = false;
-                    speechRunning = false;
-                }
+
                 Log.d("speechRecognizer", "started");
                 speechRecognizer.startListening(speechRecognizeIntent);
                 audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, true);
@@ -222,12 +225,9 @@ public class CrosswordActivity extends AppCompatActivity {
     }
 
     private void doRecognizedCommand(String s) {
-        Log.d("commanda", "doRecognizedCommand(String s)");
         s = s.toLowerCase().replaceAll(" ", "");
-
         if (s.equals(currentAnswer)) {
             readCorrect();
-
             SingleWord singleWord;
             if (currentOrientation) {
                 singleWord = horizontalWords.get(currentH);
@@ -241,19 +241,23 @@ public class CrosswordActivity extends AppCompatActivity {
             roomDB.mainDao().solved(singleWord.getID(), true);
             ArrayList<int[]> array = singleWord.getCrosses();
             for (int[] a : array) {
-                List<String> letters = roomDB.mainDao().getParticularSolvedLettersFromDB(a[0], !singleWord.isOrientation());
+                List<String> letters = roomDB.mainDao().getParticularSolvedLettersFromDB(a[0],
+                        !singleWord.isOrientation());
                 if (letters.size() > 0) {
                     String letter = letters.get(0);
-                    SingleWord sw = roomDB.mainDao().getByNumber(a[0], !singleWord.isOrientation());
-                    letter = letter.substring(0, a[1]) + sw.answer.charAt(a[1]) + letter.substring(a[1] + 1);
-                    roomDB.mainDao().updateSolvedLettersByNumber(a[0], !singleWord.isOrientation(), letter);
+                    SingleWord sw = roomDB.mainDao().getByNumber(a[0],
+                            !singleWord.isOrientation());
+                    letter = letter.substring(0, a[1])
+                            + sw.answer.charAt(a[1])
+                            + letter.substring(a[1] + 1);
+                    roomDB.mainDao().updateSolvedLettersByNumber(a[0],
+                            !singleWord.isOrientation(),
+                            letter);
                     sw.setSolvedLetters(letter);
-                    Log.e("myTag", letter + sw.answer);
                 } else {
                     Log.d("myTag", "smth go wrong: no such word crossed");
                 }
             }
-
             attempt = 0;
             if (currentOrientation) {
                 currentH += 1;
@@ -264,8 +268,6 @@ public class CrosswordActivity extends AppCompatActivity {
                     Handler handler = new Handler();
                     handler.postDelayed(this::readWord, 1000);
                 }
-
-
             } else {
                 currentV += 1;
                 if (currentV > verticalWords.size() - 1) {
@@ -275,7 +277,6 @@ public class CrosswordActivity extends AppCompatActivity {
                     Handler handler = new Handler();
                     handler.postDelayed(this::readWord, 1000);
                 }
-
             }
         }
         else if(s.contains("ответ")){
@@ -328,12 +329,15 @@ public class CrosswordActivity extends AppCompatActivity {
                 }
 
             }
-        }else if(s.contains("повтор")){
+        }
+        else if(s.contains("повтор")){
             readWord();
-        }else if(s.contains("вый") && s.contains("игр")){
+        }
+        else if(s.contains("вый") && s.contains("игр")){
             Intent myIntent = new Intent(CrosswordActivity.this, MainActivity.class);
             CrosswordActivity.this.startActivity(myIntent);
-        }else if(s.contains("команд")){
+        }
+        else if(s.contains("команд")){
             String listCommands = "Для того чтобы узнать ответ, скажите ответ. Чтобы закончить игру, " +
                     "скажите (выйти из игры). Для того чтобы перейти к следующему или предыдущему" +
                     " слову, " +
@@ -341,7 +345,8 @@ public class CrosswordActivity extends AppCompatActivity {
                     "  Ещё можно менять мой голос. Скажите (быстрее) или (медленнее), чтобы изменить скорость речи. Скажите (громче) или (тише)" +
                     " чтобы поменять громкость.";
             speakSMTH(listCommands);
-        }else if(s.contains("горизонт") || s.contains("вертика")){
+        }
+        else if(s.contains("горизонт") || s.contains("вертика")){
             if(s.contains("горизонт") && s.contains("следующ")){
                 currentH += 1;
                 direction = 1;
@@ -382,21 +387,24 @@ public class CrosswordActivity extends AppCompatActivity {
                 }
             }
 
-        }else if(s.contains("медлен")){
+        }
+        else if(s.contains("медлен")){
             if(speechRate>0.5){
                 speechRate-=0.1;
                 mTTS.setSpeechRate(speechRate);
             }else{
                 speakSMTH("Я не могу медленее");
             }
-        }else if(s.contains("быстре")){
+        }
+        else if(s.contains("быстре")){
             if(speechRate<1.3){
                 speechRate+=0.1;
                 mTTS.setSpeechRate(speechRate);
             }else{
                 speakSMTH("Я не могу быстрее");
             }
-        }else if(s.contains("громч")){
+        }
+        else if(s.contains("громч")){
             //todo
             int max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
             int change = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10;
@@ -406,7 +414,8 @@ public class CrosswordActivity extends AppCompatActivity {
             }else {
                 speakSMTH("И так уже связки болят, куда еще громче?");
             }
-        }else if(s.contains("тише")){
+        }
+        else if(s.contains("тише")){
             //todo
             int change = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10;
 
@@ -415,7 +424,8 @@ public class CrosswordActivity extends AppCompatActivity {
             }else{
                 speakSMTH("Боюсь, что тише меня не будет слышно, но если очень хотите потише, сделайте это с помощью кнопок на телефоне");
             }
-        } else{
+        }
+        else{
             readNo(s);
 
             attempt += 1;
@@ -529,7 +539,6 @@ public class CrosswordActivity extends AppCompatActivity {
 
     private void ttsInitialized() {
         Locale locale = new Locale("ru");
-
         int result = mTTS.setLanguage(locale);
         mTTS.setSpeechRate(0.7f);
         if (result == TextToSpeech.LANG_MISSING_DATA
@@ -543,22 +552,18 @@ public class CrosswordActivity extends AppCompatActivity {
             previousHorizontal.setEnabled(true);
             mute.setEnabled(true);
         }
-
         mTTS.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override
             public void onStart(String utteranceId) {
 
             }
-
             @Override
             public void onDone(String utteranceId) {
                 Handler handler = new Handler();
                 handler.postDelayed(() ->{
                     speechRunning = false;
                     isCurrentMine = false;},70);
-
             }
-
             @Override
             public void onError(String utteranceId) {
                 Handler handler = new Handler();
@@ -567,22 +572,22 @@ public class CrosswordActivity extends AppCompatActivity {
                 isCurrentMine = false;
             }
         });
-
     }
 
     private void speakSMTH(String s) {
-        Log.d("commanda", "speakSMTH(String s)");
         speechRunning = true;
         if (firstVolumeChange) {
-            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2) {
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2, 0);
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                    < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2) {
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
+                        audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2,
+                        0);
             }
             firstVolumeChange = false;
         }
         Handler handler = new Handler();
-        handler.postDelayed(() -> mTTS.speak(s, TextToSpeech.QUEUE_FLUSH, null, TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID), 30);
-
-
+        handler.postDelayed(() -> mTTS.speak(s, TextToSpeech.QUEUE_FLUSH,
+                null, TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID), 30);
     }
 
     private void readWord() {
@@ -617,17 +622,17 @@ public class CrosswordActivity extends AppCompatActivity {
             if (solvedHorizontalCount == horizontalWords.size() && solvedVerticalCount == verticalWords.size()) {
                 speakSMTH("Поздравляю, вы отгадали весь кроссворд");
                 Handler handler = new Handler();
-                handler.postDelayed(this::onBackPressed, 1500);
+                handler.postDelayed(this::onBackPressed, 6000);
             } else if (direction % 2 == 1 && solvedHorizontalCount == horizontalWords.size()) { // horizontal direction
                 speakSMTH("Вы отгадали все слова по горизонтали. Давайте перейдем к вертикальным");
                 direction = 2;
                 Handler handler = new Handler();
-                handler.postDelayed(this::readWord, 1500);
+                handler.postDelayed(this::readWord, 3000);
             } else if (direction % 2 == 0 && solvedVerticalCount == verticalWords.size()) {
                 speakSMTH("Вы отгадали все слова по вертикали. Давайте перейдем к горизонтальным");
                 direction = 1;
                 Handler handler = new Handler();
-                handler.postDelayed(this::readWord, 1500);
+                handler.postDelayed(this::readWord, 3000);
             } else {
                 //check whether there is next word
                 if (direction == 1 || direction == 2) { //moving forward(right/down)

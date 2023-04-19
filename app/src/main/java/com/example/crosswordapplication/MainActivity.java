@@ -23,6 +23,8 @@ import android.speech.tts.UtteranceProgressListener;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -38,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
@@ -75,7 +78,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        Objects.requireNonNull(getSupportActionBar()).hide();
+
         setContentView(binding.getRoot());
+
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},1);
         }
@@ -639,7 +647,7 @@ public class MainActivity extends AppCompatActivity {
                 "Если я вас услышала, то я обязательно что-нибудь скажу. Сейчас мы находимся в главном меню, где вы будете выбирать " +
                 "кроссворды. Так же, тут можно услышать полную инструкцию по управлению мной или поменять настройки. Для этого чтобы узнать все команды " +
                 " скажите (инструкция). Кстати, " +
-                " не обязательно давать мне команды в точности, как в инструкции, главное, чтобы команда содержала указанные в инструкции словаю." +
+                " не обязательно давать мне команды в точности, как в инструкции, главное, чтобы команда содержала указанные в инструкции слова." +
                 " Чтобы прослушать вступление еще раз, скажите (вступление) или (приветствие). Удачной игры");
 
 
@@ -655,6 +663,12 @@ public class MainActivity extends AppCompatActivity {
     }
     public void readListOfCrosswords(){
         speakSMTH("Пока есть только один кроссворд");
+    }
+
+    @Override
+    protected void onResume() {
+        speechRecognizer.startListening(speechRecognizeIntent);
+        super.onResume();
     }
 
     @Override
